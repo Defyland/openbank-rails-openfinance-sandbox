@@ -1,0 +1,11 @@
+salary:
+  account: checking
+  external_id: txn_fixture_salary
+  transaction_type: credit
+  amount_cents: 250000
+  currency: BRL
+  description: Salary payment
+  category: income
+  posted_at: <%= 2.days.ago %>
+  metadata: {}
+

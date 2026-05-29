@@ -1,0 +1,8 @@
+marina:
+  external_id: cus_fixture_marina
+  document_number: "90000000001"
+  full_name: Marina Fixture
+  segment: retail
+  risk_profile: standard
+  metadata: {}
+

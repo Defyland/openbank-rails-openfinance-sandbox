@@ -1,0 +1,17 @@
+accepted:
+  developer_app: partner
+  consent: authorized
+  account: checking
+  external_id: pay_fixture_accepted
+  external_reference: fixture-ref-001
+  idempotency_key: fixture-idem-001
+  request_fingerprint: fixture-fingerprint-001
+  status: accepted
+  amount_cents: 9900
+  currency: BRL
+  creditor_name: Paula Santos
+  creditor_document: "12345678901"
+  creditor_account: "0001/12345-6"
+  processed_at: <%= Time.current %>
+  metadata: {}
+

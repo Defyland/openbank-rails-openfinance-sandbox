@@ -1,0 +1,4 @@
+operator:
+  email_address: ops@example.test
+  password_digest: <%= BCrypt::Password.create("password-12345") %>
+

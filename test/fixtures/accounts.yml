@@ -1,0 +1,11 @@
+checking:
+  sandbox_customer: marina
+  external_id: acc_fixture_checking
+  account_type: checking
+  branch_code: "0001"
+  number: "654321"
+  check_digit: "0"
+  currency: BRL
+  available_balance_cents: 250000
+  status: active
+

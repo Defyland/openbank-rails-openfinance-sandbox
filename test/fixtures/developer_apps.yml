@@ -1,0 +1,10 @@
+partner:
+  name: Fixture Partner
+  client_id: app_fixture_partner
+  client_secret_digest: <%= DeveloperApp.digest("fixture-secret-12345") %>
+  webhook_url: https://partner.example.test/webhooks
+  status: active
+  active_scenario_code: happy_path
+  rate_limit_per_minute: 120
+  metadata: {}
+

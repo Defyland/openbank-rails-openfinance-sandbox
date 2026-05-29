@@ -1,0 +1,12 @@
+fixture_session_created:
+  action: ops.session.created
+  actor: operator (User)
+  actor_identifier: ops@example.test
+  target: operator (User)
+  target_identifier: ops@example.test
+  request_id: req-fixture-session
+  correlation_id: corr-fixture-session
+  ip_address: 127.0.0.1
+  user_agent: Rails test
+  metadata: {}
+
