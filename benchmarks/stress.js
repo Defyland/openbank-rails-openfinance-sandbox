@@ -1,0 +1,36 @@
+import http from "k6/http";
+import { check } from "k6";
+import { BASE_URL, bearerHeaders, bootstrapPartnerSession, paymentPayload } from "./common.js";
+
+export const options = {
+  stages: [
+    { duration: "30s", target: 20 },
+    { duration: "1m", target: 40 },
+    { duration: "30s", target: 0 }
+  ],
+  thresholds: {
+    http_req_failed: ["rate<0.05"],
+    http_req_duration: ["p(95)<750", "p(99)<1200"]
+  }
+};
+
+export function setup() {
+  return bootstrapPartnerSession();
+}
+
+export default function (session) {
+  const bearer = bearerHeaders(session.accessToken);
+
+  const accounts = http.get(`${BASE_URL}/v1/accounts`, bearer);
+  check(accounts, { "accounts listed": (r) => r.status === 200 });
+
+  const transactions = http.get(`${BASE_URL}/v1/accounts/${session.accountId}/transactions`, bearer);
+  check(transactions, { "transactions listed": (r) => r.status === 200 });
+
+  const payment = http.post(
+    `${BASE_URL}/v1/payments`,
+    JSON.stringify(paymentPayload(session.accountId, `stress-${__VU}-${__ITER}-${Date.now()}`)),
+    bearerHeaders(session.accessToken, { "Idempotency-Key": `stress-${__VU}-${__ITER}-${Date.now()}` })
+  );
+  check(payment, { "payment accepted": (r) => r.status === 201 });
+}

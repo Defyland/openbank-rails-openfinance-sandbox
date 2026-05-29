@@ -1,0 +1,205 @@
+{
+    "root_group": {
+        "name": "",
+        "path": "",
+        "id": "d41d8cd98f00b204e9800998ecf8427e",
+        "groups": {
+            "setup": {
+                "id": "5c0f8025f7e0b6654089e5b00e950f1a",
+                "groups": {},
+                "checks": {
+                        "developer app created": {
+                            "path": "::setup::developer app created",
+                            "id": "41ce8f5d74cd98b58aaa8b202e55c348",
+                            "passes": 1,
+                            "fails": 0,
+                            "name": "developer app created"
+                        },
+                        "consent created": {
+                            "path": "::setup::consent created",
+                            "id": "8b70a8e184d31cafb0fb0db878e72d2a",
+                            "passes": 1,
+                            "fails": 0,
+                            "name": "consent created"
+                        },
+                        "consent authorized": {
+                            "passes": 1,
+                            "fails": 0,
+                            "name": "consent authorized",
+                            "path": "::setup::consent authorized",
+                            "id": "5c16d8f2284a5a8d58b31860021ba894"
+                        },
+                        "token issued": {
+                            "name": "token issued",
+                            "path": "::setup::token issued",
+                            "id": "538786336f75a67d18ff41e8deaa27c4",
+                            "passes": 1,
+                            "fails": 0
+                        },
+                        "accounts listed": {
+                            "id": "da4f0a26c753743b82779d924f06caaa",
+                            "passes": 1,
+                            "fails": 0,
+                            "name": "accounts listed",
+                            "path": "::setup::accounts listed"
+                        }
+                    },
+                "name": "setup",
+                "path": "::setup"
+            }
+        },
+        "checks": {
+            "accounts listed": {
+                "fails": 0,
+                "name": "accounts listed",
+                "path": "::accounts listed",
+                "id": "7d4e351e01e89ddf1ff38bba9dfaa1de",
+                "passes": 2915
+            },
+            "balances read": {
+                "fails": 0,
+                "name": "balances read",
+                "path": "::balances read",
+                "id": "e34356ef964630eaa05a0d21491ddb51",
+                "passes": 2915
+            },
+            "payment accepted": {
+                "name": "payment accepted",
+                "path": "::payment accepted",
+                "id": "5302e54b352bc86d54379751784c7791",
+                "passes": 2915,
+                "fails": 0
+            }
+        }
+    },
+    "metrics": {
+        "iteration_duration": {
+            "max": 928.036751,
+            "p(90)": 444.1164168,
+            "p(95)": 479.1181706999999,
+            "p(99)": 619.4961597399999,
+            "avg": 314.19354080994884,
+            "min": 29.591083,
+            "med": 367.525042
+        },
+        "http_req_connecting": {
+            "avg": 0.0031048954285714287,
+            "min": 0,
+            "med": 0,
+            "max": 3.820833,
+            "p(90)": 0,
+            "p(95)": 0,
+            "p(99)": 0
+        },
+        "data_received": {
+            "count": 8320695,
+            "rate": 69280.77153815271
+        },
+        "vus": {
+            "value": 1,
+            "min": 1,
+            "max": 10
+        },
+        "vus_max": {
+            "value": 10,
+            "min": 10,
+            "max": 10
+        },
+        "checks": {
+            "passes": 8750,
+            "fails": 0,
+            "value": 1
+        },
+        "iterations": {
+            "count": 2915,
+            "rate": 24.27122362179062
+        },
+        "http_req_duration": {
+            "med": 110.195833,
+            "max": 499.972625,
+            "p(90)": 161.92977050000002,
+            "p(95)": 179.07864199999995,
+            "p(99)": 254.29084058,
+            "avg": 104.34963061931396,
+            "min": 4.8535,
+            "thresholds": {
+                "p(95)<350": false,
+                "p(99)<700": false
+            }
+        },
+        "http_req_duration{expected_response:true}": {
+            "p(99)": 254.29084058,
+            "avg": 104.34963061931396,
+            "min": 4.8535,
+            "med": 110.195833,
+            "max": 499.972625,
+            "p(90)": 161.92977050000002,
+            "p(95)": 179.07864199999995
+        },
+        "http_req_waiting": {
+            "p(90)": 161.70182110000002,
+            "p(95)": 178.8269892499999,
+            "p(99)": 254.18152849,
+            "avg": 104.1727763355426,
+            "min": 4.807167,
+            "med": 110.0310835,
+            "max": 499.020125
+        },
+        "data_sent": {
+            "count": 3375707,
+            "rate": 28107.217659912163
+        },
+        "http_req_blocked": {
+            "min": 0.00075,
+            "med": 0.005834,
+            "max": 5.881541,
+            "p(90)": 0.00796310000000001,
+            "p(95)": 0.010106549999999983,
+            "p(99)": 0.05661023999999995,
+            "avg": 0.01123479199999992
+        },
+        "http_req_failed": {
+            "passes": 0,
+            "fails": 8750,
+            "thresholds": {
+                "rate<0.01": false
+            },
+            "value": 0
+        },
+        "http_reqs": {
+            "count": 8750,
+            "rate": 72.85530246678145
+        },
+        "http_req_sending": {
+            "min": 0.002916,
+            "med": 0.018292,
+            "max": 24.709375,
+            "p(90)": 0.028754100000000008,
+            "p(95)": 0.04944374999999995,
+            "p(99)": 0.21448441999999995,
+            "avg": 0.030786852457142973
+        },
+        "http_req_tls_handshaking": {
+            "avg": 0,
+            "min": 0,
+            "med": 0,
+            "max": 0,
+            "p(90)": 0,
+            "p(95)": 0,
+            "p(99)": 0
+        },
+        "http_req_receiving": {
+            "p(90)": 0.19384230000000002,
+            "p(95)": 0.2959603499999998,
+            "p(99)": 0.9915075,
+            "avg": 0.14606743131428568,
+            "min": 0.0105,
+            "med": 0.1037915,
+            "max": 23.490458
+        }
+    },
+    "setup_data": {
+        "accessToken": "tok_sandbox_4398ddce7d09a336d839203ba7026993c88d12fbe8c3b9f831824bce61b1a3ae",
+        "accountId": "acc_demo_checking"
+    }
+}
