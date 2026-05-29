@@ -1,0 +1,22 @@
+groups:
+  - name: openbank-sandbox-availability
+    rules:
+      - alert: OpenbankSandboxScrapeDown
+        expr: up{job="openbank-sandbox"} == 0
+        for: 2m
+        labels:
+          severity: page
+        annotations:
+          summary: OpenBank Sandbox metrics scrape is down
+          description: Prometheus cannot scrape the sandbox metrics endpoint for more than 2 minutes.
+
+  - name: openbank-sandbox-operations
+    rules:
+      - alert: OpenbankWebhookBacklogHigh
+        expr: openbank_webhook_deliveries_pending > 50
+        for: 10m
+        labels:
+          severity: ticket
+        annotations:
+          summary: OpenBank Sandbox webhook backlog is high
+          description: Pending webhook deliveries have stayed above 50 for more than 10 minutes.

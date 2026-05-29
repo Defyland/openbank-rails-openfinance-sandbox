@@ -1,0 +1,53 @@
+{
+  "title": "OpenBank Sandbox Overview",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Developer Apps",
+      "targets": [
+        {
+          "expr": "openbank_developer_apps_total"
+        }
+      ],
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 8,
+        "h": 4
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Authorized Consents",
+      "targets": [
+        {
+          "expr": "openbank_authorized_consents_total"
+        }
+      ],
+      "gridPos": {
+        "x": 8,
+        "y": 0,
+        "w": 8,
+        "h": 4
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Pending Webhooks",
+      "targets": [
+        {
+          "expr": "openbank_webhook_deliveries_pending"
+        }
+      ],
+      "gridPos": {
+        "x": 16,
+        "y": 0,
+        "w": 8,
+        "h": 4
+      }
+    }
+  ]
+}

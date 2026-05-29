@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if ! command -v pg_dump >/dev/null 2>&1; then
+  echo "pg_dump is required. Install PostgreSQL client tools before running backups." >&2
+  exit 1
+fi
+
+database_url="${BACKUP_DATABASE_URL:-${DATABASE_URL:-}}"
+if [[ -z "$database_url" ]]; then
+  echo "DATABASE_URL or BACKUP_DATABASE_URL must be set." >&2
+  exit 1
+fi
+
+backup_dir="${BACKUP_DIR:-backups/postgres}"
+app_name="${APP_NAME:-openbank-sandbox}"
+timestamp="$(date -u +"%Y%m%dT%H%M%SZ")"
+backup_file="${BACKUP_FILE:-$backup_dir/$app_name-$timestamp.dump}"
+
+mkdir -p "$backup_dir"
+
+pg_dump \
+  --format=custom \
+  --no-owner \
+  --no-acl \
+  --dbname="$database_url" \
+  --file="$backup_file"
+
+if command -v sha256sum >/dev/null 2>&1; then
+  sha256sum "$backup_file" > "$backup_file.sha256"
+elif command -v shasum >/dev/null 2>&1; then
+  shasum -a 256 "$backup_file" > "$backup_file.sha256"
+fi
+
+echo "Created backup: $backup_file"
