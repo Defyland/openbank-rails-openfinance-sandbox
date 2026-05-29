@@ -3,17 +3,38 @@
   "$id": "https://github.com/Defyland/openbank-rails-openfinance-sandbox/docs/events/payment.settled.v1.json",
   "title": "payment.settled v1",
   "type": "object",
-  "required": ["event_id", "event_type", "schema_version", "occurred_at", "producer", "developer_app_id", "payment_id", "correlation_id", "payload"],
+  "required": ["event_id", "event_type", "schema_version", "occurred_at", "producer", "developer_app_id", "consent_id", "payment_id", "correlation_id", "payload"],
   "properties": {
-    "event_id": { "type": "string" },
+    "event_id": { "type": "string", "pattern": "^evt_" },
     "event_type": { "type": "string", "const": "payment.settled" },
     "schema_version": { "type": "integer", "const": 1 },
     "occurred_at": { "type": "string", "format": "date-time" },
     "producer": { "type": "string", "const": "openbank-sandbox" },
     "developer_app_id": { "type": "string" },
-    "payment_id": { "type": "string" },
+    "consent_id": { "type": "string", "pattern": "^cns_" },
+    "payment_id": { "type": "string", "pattern": "^pay_" },
     "correlation_id": { "type": "string" },
-    "payload": { "type": "object" }
+    "payload": {
+      "type": "object",
+      "required": ["status", "settled_at", "amount_cents", "currency", "ledger_effect"],
+      "properties": {
+        "status": { "type": "string", "const": "settled" },
+        "settled_at": { "type": "string", "format": "date-time" },
+        "amount_cents": { "type": "integer", "minimum": 1 },
+        "currency": { "type": "string", "const": "BRL" },
+        "ledger_effect": {
+          "type": "object",
+          "required": ["debtor_account_id", "transaction_type"],
+          "properties": {
+            "debtor_account_id": { "type": "string" },
+            "transaction_type": { "type": "string", "const": "debit" },
+            "ledger_transaction_id": { "type": "string" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
   },
   "additionalProperties": false
 }

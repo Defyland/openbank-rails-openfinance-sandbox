@@ -5,15 +5,42 @@
   "type": "object",
   "required": ["event_id", "event_type", "schema_version", "occurred_at", "producer", "developer_app_id", "consent_id", "correlation_id", "payload"],
   "properties": {
-    "event_id": { "type": "string" },
+    "event_id": { "type": "string", "pattern": "^evt_" },
     "event_type": { "type": "string", "const": "consent.authorized" },
     "schema_version": { "type": "integer", "const": 1 },
     "occurred_at": { "type": "string", "format": "date-time" },
     "producer": { "type": "string", "const": "openbank-sandbox" },
     "developer_app_id": { "type": "string" },
-    "consent_id": { "type": "string" },
+    "consent_id": { "type": "string", "pattern": "^cns_" },
     "correlation_id": { "type": "string" },
-    "payload": { "type": "object" }
+    "payload": {
+      "type": "object",
+      "required": ["status", "permissions", "authorized_at", "expires_at", "customer_reference"],
+      "properties": {
+        "status": { "type": "string", "const": "authorized" },
+        "permissions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "enum": ["ACCOUNTS_READ", "BALANCES_READ", "TRANSACTIONS_READ", "PAYMENTS_INITIATE", "WEBHOOKS_READ"]
+          },
+          "uniqueItems": true
+        },
+        "authorized_at": { "type": "string", "format": "date-time" },
+        "expires_at": { "type": "string", "format": "date-time" },
+        "customer_reference": {
+          "type": "object",
+          "required": ["external_id"],
+          "properties": {
+            "external_id": { "type": "string" },
+            "segment": { "type": "string" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
   },
   "additionalProperties": false
 }

@@ -5,15 +5,29 @@
   "type": "object",
   "required": ["event_id", "event_type", "schema_version", "occurred_at", "producer", "developer_app_id", "consent_id", "correlation_id", "payload"],
   "properties": {
-    "event_id": { "type": "string" },
+    "event_id": { "type": "string", "pattern": "^evt_" },
     "event_type": { "type": "string", "const": "consent.revoked" },
     "schema_version": { "type": "integer", "const": 1 },
     "occurred_at": { "type": "string", "format": "date-time" },
     "producer": { "type": "string", "const": "openbank-sandbox" },
     "developer_app_id": { "type": "string" },
-    "consent_id": { "type": "string" },
+    "consent_id": { "type": "string", "pattern": "^cns_" },
     "correlation_id": { "type": "string" },
-    "payload": { "type": "object" }
+    "payload": {
+      "type": "object",
+      "required": ["status", "revoked_at", "revocation_reason", "tokens_revoked"],
+      "properties": {
+        "status": { "type": "string", "const": "revoked" },
+        "revoked_at": { "type": "string", "format": "date-time" },
+        "revocation_reason": {
+          "type": "string",
+          "enum": ["partner_request", "customer_request", "operator_action", "expired_policy", "security_action"]
+        },
+        "tokens_revoked": { "type": "integer", "minimum": 0 },
+        "previous_status": { "type": "string", "enum": ["authorized"] }
+      },
+      "additionalProperties": false
+    }
   },
   "additionalProperties": false
 }

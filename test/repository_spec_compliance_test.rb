@@ -15,6 +15,7 @@ class RepositorySpecComplianceTest < ActiveSupport::TestCase
     docs/implementation/hybrid-rails-stack-plan.md
     docs/api/http-examples.md
     docs/api/error-format.md
+    docs/api/partner-testing-guide.md
     docs/architecture/overview.md
     docs/architecture/data-consistency.md
     docs/security/threat-model.md

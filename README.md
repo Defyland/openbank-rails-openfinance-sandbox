@@ -64,12 +64,14 @@ The primary database target is PostgreSQL. A SQLite fallback is available throug
 
 ## API documentation
 
-`openapi.yaml` is the source of truth for the HTTP contract. Request examples are in `docs/api/http-examples.md`, and the standard error envelope is documented in `docs/api/error-format.md`.
+`openapi.yaml` is the source of truth for the HTTP contract. Request examples are in `docs/api/http-examples.md`, the standard error envelope is documented in `docs/api/error-format.md`, and partner testing guidance is documented in [docs/api/partner-testing-guide.md](docs/api/partner-testing-guide.md).
 
 Authentication uses two schemes:
 
 - Client credentials: `X-Client-Id` plus `X-Client-Secret` for app, consent, token, scenario, and webhook management.
 - Bearer token: `Authorization: Bearer <token>` for consent-scoped account and payment APIs.
+
+OAuth/FAPI behavior is simulated for deterministic partner testing: token issuance is consent-bound, resource access checks token status, consent status, expiration, scopes, app ownership, and customer isolation, but certification-grade mTLS, JWKS, PAR/JAR/JARM, DPoP, and OpenID directory behavior remain outside this sandbox.
 
 ## Async or event architecture
 
@@ -77,7 +79,7 @@ Webhook delivery is modeled as an outbox-style table (`webhook_deliveries`). Con
 
 The sandbox intentionally persists delivery history before attempting outbound work so API mutations are durable even when partner webhook endpoints fail.
 
-Versioned webhook and consent events are documented in [docs/events/README.md](docs/events/README.md).
+Versioned webhook and consent/payment events are documented in [docs/events/README.md](docs/events/README.md).
 
 ## Database design
 

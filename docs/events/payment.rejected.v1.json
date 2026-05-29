@@ -3,17 +3,33 @@
   "$id": "https://github.com/Defyland/openbank-rails-openfinance-sandbox/docs/events/payment.rejected.v1.json",
   "title": "payment.rejected v1",
   "type": "object",
-  "required": ["event_id", "event_type", "schema_version", "occurred_at", "producer", "developer_app_id", "payment_id", "correlation_id", "payload"],
+  "required": ["event_id", "event_type", "schema_version", "occurred_at", "producer", "developer_app_id", "consent_id", "payment_id", "correlation_id", "payload"],
   "properties": {
-    "event_id": { "type": "string" },
+    "event_id": { "type": "string", "pattern": "^evt_" },
     "event_type": { "type": "string", "const": "payment.rejected" },
     "schema_version": { "type": "integer", "const": 1 },
     "occurred_at": { "type": "string", "format": "date-time" },
     "producer": { "type": "string", "const": "openbank-sandbox" },
     "developer_app_id": { "type": "string" },
-    "payment_id": { "type": "string" },
+    "consent_id": { "type": "string", "pattern": "^cns_" },
+    "payment_id": { "type": "string", "pattern": "^pay_" },
     "correlation_id": { "type": "string" },
-    "payload": { "type": "object" }
+    "payload": {
+      "type": "object",
+      "required": ["status", "rejected_at", "failure_code", "amount_cents", "currency"],
+      "properties": {
+        "status": { "type": "string", "const": "rejected" },
+        "rejected_at": { "type": "string", "format": "date-time" },
+        "failure_code": {
+          "type": "string",
+          "enum": ["INSUFFICIENT_FUNDS", "SCENARIO_REJECTED", "VALIDATION_FAILED", "CONSENT_REVOKED", "CONSENT_EXPIRED"]
+        },
+        "failure_message": { "type": "string" },
+        "amount_cents": { "type": "integer", "minimum": 1 },
+        "currency": { "type": "string", "const": "BRL" }
+      },
+      "additionalProperties": false
+    }
   },
   "additionalProperties": false
 }
