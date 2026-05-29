@@ -1,0 +1,635 @@
+openapi: 3.1.0
+info:
+  title: OpenBank Sandbox API
+  version: 1.0.0
+  summary: Consent-driven Open Finance sandbox for partner integration testing.
+servers:
+  - url: http://localhost:3000
+tags:
+  - name: Platform
+  - name: Developer apps
+  - name: Consents
+  - name: OAuth sandbox
+  - name: Accounts
+  - name: Payments
+  - name: Webhooks
+  - name: Scenarios
+paths:
+  /up:
+    get:
+      tags: [Platform]
+      summary: Liveness check
+      security: []
+      responses:
+        "200":
+          description: Process is alive.
+  /ready:
+    get:
+      tags: [Platform]
+      summary: Readiness check
+      security: []
+      responses:
+        "200":
+          description: Runtime dependencies are reachable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadinessResponse"
+        "503":
+          description: Dependency unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadinessResponse"
+  /metrics:
+    get:
+      tags: [Platform]
+      summary: Prometheus metrics
+      security: []
+      responses:
+        "200":
+          description: Prometheus text exposition.
+          content:
+            text/plain:
+              schema:
+                type: string
+  /v1/developer_apps:
+    post:
+      tags: [Developer apps]
+      summary: Register a sandbox developer application
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [developer_app]
+              properties:
+                developer_app:
+                  $ref: "#/components/schemas/DeveloperAppCreate"
+      responses:
+        "201":
+          description: Developer app created. The client secret is returned once.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  developer_app:
+                    allOf:
+                      - $ref: "#/components/schemas/DeveloperApp"
+                      - type: object
+                        properties:
+                          client_secret:
+                            type: string
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /v1/developer_app:
+    get:
+      tags: [Developer apps]
+      summary: Read the authenticated developer app
+      security:
+        - ClientCredentials: []
+      responses:
+        "200":
+          description: Developer app profile.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  developer_app:
+                    $ref: "#/components/schemas/DeveloperApp"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /v1/consents:
+    get:
+      tags: [Consents]
+      summary: List app consents
+      security:
+        - ClientCredentials: []
+      responses:
+        "200":
+          description: Consent list.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  consents:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Consent"
+    post:
+      tags: [Consents]
+      summary: Create a consent request
+      security:
+        - ClientCredentials: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [consent]
+              properties:
+                consent:
+                  $ref: "#/components/schemas/ConsentCreate"
+      responses:
+        "201":
+          description: Consent created in awaiting_authorization state.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  consent:
+                    $ref: "#/components/schemas/Consent"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /v1/consents/{consent_id}:
+    get:
+      tags: [Consents]
+      summary: Read one consent
+      security:
+        - ClientCredentials: []
+      parameters:
+        - $ref: "#/components/parameters/ConsentId"
+      responses:
+        "200":
+          description: Consent.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  consent:
+                    $ref: "#/components/schemas/Consent"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /v1/consents/{consent_id}/authorize:
+    patch:
+      tags: [Consents]
+      summary: Simulate customer authorization
+      security:
+        - ClientCredentials: []
+      parameters:
+        - $ref: "#/components/parameters/ConsentId"
+      responses:
+        "200":
+          description: Consent authorized and webhook queued.
+  /v1/consents/{consent_id}/revoke:
+    patch:
+      tags: [Consents]
+      summary: Revoke consent and active tokens
+      security:
+        - ClientCredentials: []
+      parameters:
+        - $ref: "#/components/parameters/ConsentId"
+      responses:
+        "200":
+          description: Consent revoked and webhook queued.
+  /v1/oauth/token:
+    post:
+      tags: [OAuth sandbox]
+      summary: Issue a consent-scoped bearer token
+      security:
+        - ClientCredentials: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token:
+                  type: object
+                  required: [grant_type, consent_id]
+                  properties:
+                    grant_type:
+                      type: string
+                      enum: [client_credentials]
+                    consent_id:
+                      type: string
+      responses:
+        "201":
+          description: Bearer token issued.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    $ref: "#/components/schemas/Token"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+  /v1/accounts:
+    get:
+      tags: [Accounts]
+      summary: List consent-scoped accounts
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Accounts visible to the consent.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accounts:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Account"
+  /v1/accounts/{account_id}:
+    get:
+      tags: [Accounts]
+      summary: Read one consent-scoped account
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/AccountId"
+      responses:
+        "200":
+          description: Account.
+  /v1/accounts/{account_id}/balances:
+    get:
+      tags: [Accounts]
+      summary: Read account balance
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/AccountId"
+      responses:
+        "200":
+          description: Balance.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  balance:
+                    $ref: "#/components/schemas/Balance"
+  /v1/accounts/{account_id}/transactions:
+    get:
+      tags: [Accounts]
+      summary: List account transactions
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/AccountId"
+      responses:
+        "200":
+          description: Transactions.
+  /v1/payments:
+    get:
+      tags: [Payments]
+      summary: List payments for the active consent
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Payments.
+    post:
+      tags: [Payments]
+      summary: Initiate an idempotent sandbox payment
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [payment]
+              properties:
+                payment:
+                  $ref: "#/components/schemas/PaymentCreate"
+      responses:
+        "201":
+          description: Payment accepted or rejected by scenario.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  payment:
+                    $ref: "#/components/schemas/Payment"
+        "409":
+          $ref: "#/components/responses/Conflict"
+  /v1/payments/{payment_id}:
+    get:
+      tags: [Payments]
+      summary: Read one payment
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: payment_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Payment.
+  /v1/webhook_deliveries:
+    get:
+      tags: [Webhooks]
+      summary: List webhook delivery history
+      security:
+        - ClientCredentials: []
+      responses:
+        "200":
+          description: Delivery history.
+  /v1/webhook_deliveries/{event_id}:
+    get:
+      tags: [Webhooks]
+      summary: Read webhook delivery details
+      security:
+        - ClientCredentials: []
+      parameters:
+        - $ref: "#/components/parameters/EventId"
+      responses:
+        "200":
+          description: Delivery.
+  /v1/webhook_deliveries/{event_id}/replay:
+    post:
+      tags: [Webhooks]
+      summary: Replay a webhook delivery
+      security:
+        - ClientCredentials: []
+      parameters:
+        - $ref: "#/components/parameters/EventId"
+      responses:
+        "200":
+          description: Delivery reset and re-enqueued.
+  /v1/scenarios:
+    get:
+      tags: [Scenarios]
+      summary: List available sandbox scenarios
+      security:
+        - ClientCredentials: []
+      responses:
+        "200":
+          description: Scenarios.
+  /v1/scenarios/{code}/activate:
+    patch:
+      tags: [Scenarios]
+      summary: Activate a scenario for the developer app
+      security:
+        - ClientCredentials: []
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Scenario activated.
+components:
+  parameters:
+    ConsentId:
+      name: consent_id
+      in: path
+      required: true
+      schema:
+        type: string
+    AccountId:
+      name: account_id
+      in: path
+      required: true
+      schema:
+        type: string
+    EventId:
+      name: event_id
+      in: path
+      required: true
+      schema:
+        type: string
+  securitySchemes:
+    ClientCredentials:
+      type: apiKey
+      in: header
+      name: X-Client-Id
+      description: Pair with X-Client-Secret.
+    BearerAuth:
+      type: http
+      scheme: bearer
+  responses:
+    Unauthorized:
+      description: Missing or invalid credentials.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Forbidden:
+      description: Authenticated but not authorized.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    NotFound:
+      description: Resource not found in the caller scope.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Conflict:
+      description: Idempotency or uniqueness conflict.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    ValidationError:
+      description: Invalid request payload.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+  schemas:
+    ReadinessResponse:
+      type: object
+      required: [status, dependencies, checked_at]
+      properties:
+        status:
+          type: string
+          enum: [ready, not_ready]
+        dependencies:
+          type: object
+          required: [primary_database, cache_database, queue_database, cable_database]
+          properties:
+            primary_database:
+              type: string
+              enum: [ok, error]
+            cache_database:
+              type: string
+              enum: [ok, error]
+            queue_database:
+              type: string
+              enum: [ok, error]
+            cable_database:
+              type: string
+              enum: [ok, error]
+        checked_at:
+          type: string
+          format: date-time
+    DeveloperAppCreate:
+      type: object
+      required: [name, webhook_url]
+      properties:
+        name:
+          type: string
+        webhook_url:
+          type: string
+          format: uri
+        rate_limit_per_minute:
+          type: integer
+          minimum: 1
+    DeveloperApp:
+      type: object
+      required: [id, name, webhook_url, status, active_scenario_code]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        webhook_url:
+          type: string
+        status:
+          type: string
+          enum: [active, suspended]
+        active_scenario_code:
+          type: string
+        rate_limit_per_minute:
+          type: integer
+    ConsentCreate:
+      type: object
+      required: [customer_document_number, permissions]
+      properties:
+        customer_document_number:
+          type: string
+        permissions:
+          type: array
+          items:
+            type: string
+            enum: [ACCOUNTS_READ, BALANCES_READ, TRANSACTIONS_READ, PAYMENTS_INITIATE, WEBHOOKS_READ]
+        external_id:
+          type: string
+    Consent:
+      type: object
+      properties:
+        id:
+          type: string
+        status:
+          type: string
+          enum: [awaiting_authorization, authorized, revoked, expired, rejected]
+        permissions:
+          type: array
+          items:
+            type: string
+        expires_at:
+          type: string
+          format: date-time
+    Token:
+      type: object
+      properties:
+        access_token:
+          type: string
+        token_type:
+          type: string
+          const: Bearer
+        expires_in:
+          type: integer
+        permissions:
+          type: array
+          items:
+            type: string
+    Account:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+        branch_code:
+          type: string
+        number:
+          type: string
+        check_digit:
+          type: string
+        currency:
+          type: string
+    Balance:
+      type: object
+      properties:
+        account_id:
+          type: string
+        available_balance_cents:
+          type: integer
+        currency:
+          type: string
+    PaymentCreate:
+      type: object
+      required: [account_id, external_reference, amount_cents, creditor_name, creditor_document, creditor_account]
+      properties:
+        account_id:
+          type: string
+        external_reference:
+          type: string
+        amount_cents:
+          type: integer
+          minimum: 1
+        currency:
+          type: string
+          default: BRL
+        creditor_name:
+          type: string
+        creditor_document:
+          type: string
+        creditor_account:
+          type: string
+    Payment:
+      type: object
+      properties:
+        id:
+          type: string
+        external_reference:
+          type: string
+        status:
+          type: string
+          enum: [accepted, rejected, settled]
+        amount_cents:
+          type: integer
+        failure_code:
+          type:
+            - string
+            - "null"
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message, request_id, correlation_id]
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            details:
+              type: object
+            request_id:
+              type: string
+            correlation_id:
+              type: string
