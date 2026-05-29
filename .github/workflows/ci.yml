@@ -1,0 +1,70 @@
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: openbank_sandbox_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d openbank_sandbox_test"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      RAILS_ENV: test
+      POSTGRES_HOST: 127.0.0.1
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_TEST_DB: openbank_sandbox_test
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4.9"
+          bundler-cache: true
+
+      - name: Prepare database
+        run: bin/rails db:prepare
+
+      - name: Lint Ruby
+        run: bin/rubocop
+
+      - name: Test
+        run: bin/rails test
+
+      - name: System test
+        run: bin/rails test:system
+
+      - name: Seed check
+        run: bin/rails db:seed:replant
+
+      - name: Dependency audit
+        run: bin/bundler-audit
+
+      - name: Brakeman
+        run: bin/brakeman --quiet --no-pager
+
+      - name: OpenAPI lint
+        run: npx --yes @redocly/cli lint openapi.yaml
+
+      - name: Docker build
+        run: docker build -t openbank-sandbox:ci .
+
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage
