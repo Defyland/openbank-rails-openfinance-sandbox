@@ -1,0 +1,87 @@
+<% use_sqlite = ENV["DATABASE_ADAPTER"] == "sqlite3" %>
+<% if use_sqlite %>
+default: &default
+  adapter: sqlite3
+  max_connections: <%= ENV.fetch("RAILS_MAX_THREADS", 5) %>
+  timeout: 5000
+  schema_dump: schema.sqlite.rb
+
+development:
+  <<: *default
+  database: storage/development.sqlite3
+
+test:
+  <<: *default
+  database: storage/test.sqlite3
+
+benchmark:
+  <<: *default
+  database: storage/benchmark.sqlite3
+
+production:
+  primary: &primary_production
+    <<: *default
+    database: <%= ENV.fetch("DATABASE_PATH", "storage/production.sqlite3") %>
+  cache:
+    <<: *primary_production
+    database: <%= ENV.fetch("CACHE_DATABASE_PATH", "storage/production_cache.sqlite3") %>
+    migrations_paths: db/cache_migrate
+    schema_dump: cache_schema.rb
+  queue:
+    <<: *primary_production
+    database: <%= ENV.fetch("QUEUE_DATABASE_PATH", "storage/production_queue.sqlite3") %>
+    migrations_paths: db/queue_migrate
+    schema_dump: queue_schema.rb
+  cable:
+    <<: *primary_production
+    database: <%= ENV.fetch("CABLE_DATABASE_PATH", "storage/production_cable.sqlite3") %>
+    migrations_paths: db/cable_migrate
+    schema_dump: cable_schema.rb
+<% else %>
+default: &default
+  adapter: postgresql
+  encoding: unicode
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS", 5) %>
+  host: <%= ENV.fetch("POSTGRES_HOST", ENV.fetch("DATABASE_HOST", "127.0.0.1")) %>
+  port: <%= ENV.fetch("POSTGRES_PORT", 5432) %>
+  username: <%= ENV.fetch("POSTGRES_USER", ENV.fetch("DATABASE_USER", "postgres")) %>
+  password: <%= ENV.fetch("POSTGRES_PASSWORD", ENV.fetch("DATABASE_PASSWORD", "")) %>
+  variables:
+    statement_timeout: <%= ENV.fetch("POSTGRES_STATEMENT_TIMEOUT_MS", 5000) %>
+
+development:
+  <<: *default
+  database: <%= ENV.fetch("POSTGRES_DB", "openbank_sandbox_development") %>
+
+test:
+  <<: *default
+  database: <%= ENV.fetch("POSTGRES_TEST_DB", "openbank_sandbox_test#{ENV['TEST_ENV_NUMBER']}") %>
+
+benchmark:
+  <<: *default
+  database: <%= ENV.fetch("POSTGRES_BENCHMARK_DB", "openbank_sandbox_benchmark") %>
+
+production:
+  primary: &primary_production
+<% if ENV["DATABASE_URL"] && !ENV["DATABASE_URL"].empty? %>
+    url: <%= ENV["DATABASE_URL"] %>
+<% else %>
+    <<: *default
+    database: <%= ENV.fetch("POSTGRES_PRODUCTION_DB", "openbank_sandbox_production") %>
+<% end %>
+  cache:
+    <<: *primary_production
+    database: <%= ENV.fetch("POSTGRES_CACHE_DB", "openbank_sandbox_production_cache") %>
+    migrations_paths: db/cache_migrate
+    schema_dump: cache_schema.rb
+  queue:
+    <<: *primary_production
+    database: <%= ENV.fetch("POSTGRES_QUEUE_DB", "openbank_sandbox_production_queue") %>
+    migrations_paths: db/queue_migrate
+    schema_dump: queue_schema.rb
+  cable:
+    <<: *primary_production
+    database: <%= ENV.fetch("POSTGRES_CABLE_DB", "openbank_sandbox_production_cable") %>
+    migrations_paths: db/cable_migrate
+    schema_dump: cable_schema.rb
+<% end %>

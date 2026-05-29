@@ -1,1 +1,18 @@
 .DS_Store
+
+# Ignore key files for decrypting credentials and more.
+/config/*.key
+
+/coverage/
+/backups/
+/log/*
+!/log/.keep
+/public/assets/
+/tmp/*
+!/tmp/.keep
+!/tmp/pids/
+!/tmp/pids/.keep
+/storage/*.sqlite3
+/storage/*.sqlite3-*
+/.bundle/
+/vendor/bundle/

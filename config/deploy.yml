@@ -1,0 +1,64 @@
+service: openbank-sandbox
+image: ghcr.io/your-org/openbank-sandbox
+
+servers:
+  web:
+    - 192.0.2.10
+
+proxy:
+  ssl: true
+  host: openbank-sandbox.example.com
+  app_port: 80
+  healthcheck:
+    path: /up
+
+registry:
+  server: ghcr.io
+  username: your-org
+  password:
+    - KAMAL_REGISTRY_PASSWORD
+
+env:
+  clear:
+    RAILS_ENV: production
+    RAILS_LOG_TO_STDOUT: true
+    RAILS_SERVE_STATIC_FILES: true
+    SOLID_QUEUE_IN_PUMA: true
+    POSTGRES_HOST: openbank-postgres
+    POSTGRES_PORT: 5432
+    POSTGRES_USER: openbank
+    POSTGRES_PRODUCTION_DB: openbank_sandbox_production
+    POSTGRES_CACHE_DB: openbank_sandbox_production_cache
+    POSTGRES_QUEUE_DB: openbank_sandbox_production_queue
+    POSTGRES_CABLE_DB: openbank_sandbox_production_cable
+  secret:
+    - RAILS_MASTER_KEY
+    - POSTGRES_PASSWORD
+    - OPERATOR_EMAIL
+    - OPERATOR_PASSWORD
+
+volumes:
+  - openbank_storage:/rails/storage
+
+builder:
+  arch: amd64
+
+aliases:
+  console: app exec --interactive --reuse "bin/rails console"
+  shell: app exec --interactive --reuse "bash"
+  logs: app logs -f
+  dbc: app exec --interactive --reuse "bin/rails dbconsole"
+
+accessories:
+  postgres:
+    image: postgres:16-alpine
+    host: 192.0.2.10
+    port: "127.0.0.1:5432:5432"
+    env:
+      clear:
+        POSTGRES_USER: openbank
+        POSTGRES_DB: openbank_sandbox_production
+      secret:
+        - POSTGRES_PASSWORD
+    directories:
+      - data:/var/lib/postgresql/data

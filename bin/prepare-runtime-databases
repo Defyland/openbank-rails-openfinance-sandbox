@@ -1,0 +1,20 @@
+#!/bin/bash
+set -euo pipefail
+
+./bin/rails db:prepare
+
+ensure_schema_loaded() {
+  local database_name="$1"
+  local table_check="$2"
+
+  if ./bin/rails runner "exit(${table_check} ? 0 : 1)"; then
+    return 0
+  fi
+
+  echo "Loading schema for ${database_name} database..."
+  DISABLE_DATABASE_ENVIRONMENT_CHECK=1 ./bin/rails "db:schema:load:${database_name}"
+}
+
+ensure_schema_loaded cache "SolidCache::Entry.table_exists?"
+ensure_schema_loaded queue "SolidQueue::Job.table_exists?"
+ensure_schema_loaded cable "SolidCable::Message.table_exists?"

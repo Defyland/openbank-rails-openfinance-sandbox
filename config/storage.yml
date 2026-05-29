@@ -1,0 +1,19 @@
+test:
+  service: Disk
+  root: <%= Rails.root.join("tmp/storage") %>
+
+local:
+  service: Disk
+  root: <%= Rails.root.join("storage") %>
+
+amazon:
+  service: S3
+  access_key_id: <%= ENV["AWS_ACCESS_KEY_ID"] %>
+  secret_access_key: <%= ENV["AWS_SECRET_ACCESS_KEY"] %>
+  region: <%= ENV.fetch("AWS_REGION", "us-east-1") %>
+  bucket: <%= ENV["ACTIVE_STORAGE_BUCKET"] %>
+  endpoint: <%= ENV["ACTIVE_STORAGE_ENDPOINT"] if ENV["ACTIVE_STORAGE_ENDPOINT"].present? %>
+  force_path_style: <%= ENV.fetch("ACTIVE_STORAGE_FORCE_PATH_STYLE", "false") == "true" %>
+
+# Production defaults to local disk for a single-server Kamal deployment.
+# Set ACTIVE_STORAGE_SERVICE=amazon for S3-compatible managed storage.
