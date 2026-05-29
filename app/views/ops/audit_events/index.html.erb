@@ -1,0 +1,45 @@
+<% content_for :title, "Audit Events" %>
+
+<header class="page-header">
+  <div>
+    <p class="eyebrow">Security and operations</p>
+    <h1>Audit events</h1>
+  </div>
+
+  <%= form_with url: ops_audit_events_path, method: :get, local: true, class: "inline-form" do |form| %>
+    <%= form.label :action_name, "Action" %>
+    <%= form.select :action_name, options_for_select([["All actions", nil]] + @actions.map { |action| [action, action] }, @selected_action) %>
+    <%= form.submit "Filter", class: "secondary-button" %>
+  <% end %>
+</header>
+
+<section class="panel">
+  <table>
+    <thead>
+      <tr>
+        <th>When</th>
+        <th>Action</th>
+        <th>Actor</th>
+        <th>Target</th>
+        <th>Correlation</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% if @audit_events.any? %>
+        <% @audit_events.each do |audit_event| %>
+          <tr>
+            <td><%= link_to l(audit_event.created_at, format: :short), ops_audit_event_path(audit_event) %></td>
+            <td><%= audit_event.action %></td>
+            <td><%= audit_event.actor_identifier || audit_event.actor_type || "system" %></td>
+            <td><%= audit_event.target_identifier || audit_event.target_type || "-" %></td>
+            <td><code><%= audit_event.correlation_id || "-" %></code></td>
+          </tr>
+        <% end %>
+      <% else %>
+        <tr>
+          <td colspan="5">No audit events matched this filter.</td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</section>

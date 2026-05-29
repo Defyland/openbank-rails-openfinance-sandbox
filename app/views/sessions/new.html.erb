@@ -1,0 +1,23 @@
+<% content_for :title, "Sign in" %>
+
+<section class="login-panel">
+  <div class="login-copy">
+    <p class="eyebrow">Operations</p>
+    <h1>OpenBank Sandbox</h1>
+    <p>Operator access for consent simulation, payment inspection, scenario control, and webhook recovery.</p>
+  </div>
+
+  <%= form_with url: session_path, class: "login-form" do |form| %>
+    <div>
+      <%= form.label :email_address, "Email" %>
+      <%= form.email_field :email_address, required: true, autofocus: true, autocomplete: "username" %>
+    </div>
+
+    <div>
+      <%= form.label :password, "Password" %>
+      <%= form.password_field :password, required: true, autocomplete: "current-password" %>
+    </div>
+
+    <%= form.submit "Sign in", class: "primary-button" %>
+  <% end %>
+</section>

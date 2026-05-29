@@ -1,0 +1,66 @@
+<% content_for :title, @consent.external_id %>
+
+<header class="page-header">
+  <div>
+    <p class="eyebrow"><%= @consent.developer_app.name %></p>
+    <h1><%= @consent.external_id %></h1>
+  </div>
+  <% if @consent.status == "authorized" %>
+    <%= button_to "Revoke", revoke_ops_consent_path(@consent), method: :patch, class: "danger-button" %>
+  <% end %>
+</header>
+
+<section class="detail-grid">
+  <article class="panel">
+    <h2>Consent state</h2>
+    <dl class="details">
+      <dt>Status</dt>
+      <dd><span class="status <%= @consent.status %>"><%= @consent.status %></span></dd>
+      <dt>Customer</dt>
+      <dd><%= @consent.sandbox_customer.full_name %></dd>
+      <dt>Permissions</dt>
+      <dd><%= @consent.permissions.join(", ") %></dd>
+      <dt>Expires</dt>
+      <dd><%= l(@consent.expires_at, format: :long) %></dd>
+    </dl>
+  </article>
+
+  <article class="panel">
+    <h2>Access tokens</h2>
+    <table>
+      <tbody>
+        <% @consent.access_tokens.order(created_at: :desc).each do |token| %>
+          <tr>
+            <td><code>...<%= token.token_last_eight %></code></td>
+            <td><%= token.revoked_at.present? ? "revoked" : "active" %></td>
+            <td><%= l(token.expires_at, format: :short) %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </article>
+</section>
+
+<article class="panel">
+  <h2>Payments under consent</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Reference</th>
+        <th>Status</th>
+        <th>Amount</th>
+        <th>Processed</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @payments.each do |payment| %>
+        <tr>
+          <td><%= link_to payment.external_reference, ops_payment_path(payment) %></td>
+          <td><span class="status <%= payment.status %>"><%= payment.status %></span></td>
+          <td><%= number_to_currency(payment.amount_cents / 100.0, unit: payment.currency + " ") %></td>
+          <td><%= payment.processed_at ? l(payment.processed_at, format: :short) : "-" %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</article>

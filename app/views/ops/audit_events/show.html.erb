@@ -1,0 +1,29 @@
+<% content_for :title, "Audit Event" %>
+
+<header class="page-header">
+  <div>
+    <p class="eyebrow">Security and operations</p>
+    <h1><%= @audit_event.action %></h1>
+  </div>
+  <%= link_to "Back to audit", ops_audit_events_path, class: "secondary-button" %>
+</header>
+
+<section class="detail-grid">
+  <article class="panel">
+    <h2>Context</h2>
+    <dl class="detail-list">
+      <div><dt>Occurred at</dt><dd><%= l(@audit_event.created_at, format: :long) %></dd></div>
+      <div><dt>Actor</dt><dd><%= @audit_event.actor_identifier || @audit_event.actor_type || "system" %></dd></div>
+      <div><dt>Target</dt><dd><%= @audit_event.target_identifier || @audit_event.target_type || "-" %></dd></div>
+      <div><dt>Request ID</dt><dd><code><%= @audit_event.request_id || "-" %></code></dd></div>
+      <div><dt>Correlation ID</dt><dd><code><%= @audit_event.correlation_id || "-" %></code></dd></div>
+      <div><dt>IP address</dt><dd><%= @audit_event.ip_address || "-" %></dd></div>
+      <div><dt>User agent</dt><dd><%= @audit_event.user_agent || "-" %></dd></div>
+    </dl>
+  </article>
+
+  <article class="panel">
+    <h2>Metadata</h2>
+    <pre class="payload"><%= JSON.pretty_generate(@audit_event.metadata) %></pre>
+  </article>
+</section>

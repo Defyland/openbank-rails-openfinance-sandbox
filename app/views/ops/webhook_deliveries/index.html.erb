@@ -1,0 +1,39 @@
+<% content_for :title, "Webhooks" %>
+
+<header class="page-header">
+  <div>
+    <p class="eyebrow">Delivery recovery</p>
+    <h1>Webhook deliveries</h1>
+  </div>
+  <div class="filters">
+    <% WebhookDelivery::STATUSES.each do |status| %>
+      <%= link_to status, ops_webhook_deliveries_path(status: status), class: ("active" if @status == status) %>
+    <% end %>
+    <%= link_to "all", ops_webhook_deliveries_path, class: ("active" if @status.blank?) %>
+  </div>
+</header>
+
+<article class="panel">
+  <table>
+    <thead>
+      <tr>
+        <th>Event</th>
+        <th>Status</th>
+        <th>Attempts</th>
+        <th>App</th>
+        <th>Next attempt</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @webhook_deliveries.each do |delivery| %>
+        <tr>
+          <td><%= link_to delivery.event_type, ops_webhook_delivery_path(delivery) %></td>
+          <td><span class="status <%= delivery.status %>"><%= delivery.status %></span></td>
+          <td><%= delivery.attempts_count %></td>
+          <td><%= delivery.developer_app.name %></td>
+          <td><%= delivery.next_attempt_at ? l(delivery.next_attempt_at, format: :short) : "-" %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</article>

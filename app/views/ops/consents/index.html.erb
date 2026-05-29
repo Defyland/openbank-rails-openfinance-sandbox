@@ -1,0 +1,39 @@
+<% content_for :title, "Consents" %>
+
+<header class="page-header">
+  <div>
+    <p class="eyebrow">Authorization</p>
+    <h1>Consents</h1>
+  </div>
+  <div class="filters">
+    <% Consent::STATUSES.each do |status| %>
+      <%= link_to status, ops_consents_path(status: status), class: ("active" if @status == status) %>
+    <% end %>
+    <%= link_to "all", ops_consents_path, class: ("active" if @status.blank?) %>
+  </div>
+</header>
+
+<article class="panel">
+  <table>
+    <thead>
+      <tr>
+        <th>Consent</th>
+        <th>Status</th>
+        <th>Customer</th>
+        <th>App</th>
+        <th>Expires</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @consents.each do |consent| %>
+        <tr>
+          <td><%= link_to consent.external_id, ops_consent_path(consent) %></td>
+          <td><span class="status <%= consent.status %>"><%= consent.status %></span></td>
+          <td><%= consent.sandbox_customer.full_name %></td>
+          <td><%= consent.developer_app.name %></td>
+          <td><%= l(consent.expires_at, format: :short) %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</article>

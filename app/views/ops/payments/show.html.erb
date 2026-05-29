@@ -1,0 +1,54 @@
+<% content_for :title, @payment.external_reference %>
+
+<header class="page-header">
+  <div>
+    <p class="eyebrow"><%= @payment.external_id %></p>
+    <h1><%= @payment.external_reference %></h1>
+  </div>
+  <%= link_to "Back", ops_payments_path, class: "secondary-button" %>
+</header>
+
+<section class="detail-grid">
+  <article class="panel">
+    <h2>Payment</h2>
+    <dl class="details">
+      <dt>Status</dt>
+      <dd><span class="status <%= @payment.status %>"><%= @payment.status %></span></dd>
+      <dt>Amount</dt>
+      <dd><%= number_to_currency(@payment.amount_cents / 100.0, unit: @payment.currency + " ") %></dd>
+      <dt>Creditor</dt>
+      <dd><%= @payment.creditor_name %></dd>
+      <dt>Failure code</dt>
+      <dd><%= @payment.failure_code || "-" %></dd>
+    </dl>
+  </article>
+
+  <article class="panel">
+    <h2>Scope</h2>
+    <dl class="details">
+      <dt>Developer app</dt>
+      <dd><%= link_to @payment.developer_app.name, ops_developer_app_path(@payment.developer_app) %></dd>
+      <dt>Consent</dt>
+      <dd><%= link_to @payment.consent.external_id, ops_consent_path(@payment.consent) %></dd>
+      <dt>Account</dt>
+      <dd><%= @payment.account.external_id %></dd>
+      <dt>Idempotency key</dt>
+      <dd><code><%= @payment.idempotency_key %></code></dd>
+    </dl>
+  </article>
+</section>
+
+<article class="panel">
+  <h2>Webhook deliveries</h2>
+  <table>
+    <tbody>
+      <% @webhook_deliveries.each do |delivery| %>
+        <tr>
+          <td><%= link_to delivery.event_type, ops_webhook_delivery_path(delivery) %></td>
+          <td><span class="status <%= delivery.status %>"><%= delivery.status %></span></td>
+          <td><%= delivery.attempts_count %> attempts</td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</article>

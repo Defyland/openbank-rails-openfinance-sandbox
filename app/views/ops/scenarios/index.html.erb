@@ -1,0 +1,49 @@
+<% content_for :title, "Scenarios" %>
+
+<header class="page-header">
+  <div>
+    <p class="eyebrow">Simulation controls</p>
+    <h1>Sandbox scenarios</h1>
+  </div>
+</header>
+
+<section class="scenario-grid">
+  <% @scenarios.each do |scenario| %>
+    <article class="panel">
+      <div class="panel-header">
+        <div>
+          <h2><%= scenario.fetch(:name) %></h2>
+          <p><code><%= scenario.fetch(:code) %></code></p>
+        </div>
+      </div>
+      <p><%= scenario.fetch(:description) %></p>
+
+      <%= form_with url: activate_ops_scenario_path(scenario.fetch(:code)), method: :patch, class: "inline-form" do |form| %>
+        <%= form.collection_select :developer_app_id, @developer_apps, :id, :name %>
+        <%= form.submit "Activate #{scenario.fetch(:code)}", class: "primary-button" %>
+      <% end %>
+    </article>
+  <% end %>
+</section>
+
+<article class="panel">
+  <h2>Current app scenarios</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>App</th>
+        <th>Scenario</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @developer_apps.each do |app| %>
+        <tr>
+          <td><%= link_to app.name, ops_developer_app_path(app) %></td>
+          <td><%= app.active_scenario_code %></td>
+          <td><span class="status <%= app.status %>"><%= app.status %></span></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</article>

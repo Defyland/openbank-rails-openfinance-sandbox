@@ -1,0 +1,33 @@
+<% content_for :title, "Developer Apps" %>
+
+<header class="page-header">
+  <div>
+    <p class="eyebrow">Partners</p>
+    <h1>Developer apps</h1>
+  </div>
+</header>
+
+<article class="panel">
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Client ID</th>
+        <th>Status</th>
+        <th>Scenario</th>
+        <th>Rate limit</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @developer_apps.each do |app| %>
+        <tr>
+          <td><%= link_to app.name, ops_developer_app_path(app) %></td>
+          <td><code><%= app.client_id %></code></td>
+          <td><span class="status <%= app.status %>"><%= app.status %></span></td>
+          <td><%= app.active_scenario_code %></td>
+          <td><%= app.rate_limit_per_minute %>/min</td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</article>

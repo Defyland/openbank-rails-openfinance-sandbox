@@ -1,0 +1,35 @@
+<% content_for :title, @webhook_delivery.event_id %>
+
+<header class="page-header">
+  <div>
+    <p class="eyebrow"><%= @webhook_delivery.event_id %></p>
+    <h1><%= @webhook_delivery.event_type %></h1>
+  </div>
+  <%= button_to "Replay", replay_ops_webhook_delivery_path(@webhook_delivery), method: :post, class: "primary-button" %>
+</header>
+
+<section class="detail-grid">
+  <article class="panel">
+    <h2>Delivery</h2>
+    <dl class="details">
+      <dt>Status</dt>
+      <dd><span class="status <%= @webhook_delivery.status %>"><%= @webhook_delivery.status %></span></dd>
+      <dt>Attempts</dt>
+      <dd><%= @webhook_delivery.attempts_count %></dd>
+      <dt>Signature</dt>
+      <dd class="copy-row">
+        <code><%= @webhook_delivery.signature %></code>
+        <button class="secondary-button" data-controller="clipboard" data-clipboard-text-value="<%= @webhook_delivery.signature %>" data-action="clipboard#copy">
+          Copy
+        </button>
+      </dd>
+      <dt>Last error</dt>
+      <dd><%= @webhook_delivery.last_error || "-" %></dd>
+    </dl>
+  </article>
+
+  <article class="panel">
+    <h2>Payload</h2>
+    <pre class="payload"><%= JSON.pretty_generate(@webhook_delivery.payload) %></pre>
+  </article>
+</section>

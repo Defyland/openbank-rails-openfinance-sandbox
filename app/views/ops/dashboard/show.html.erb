@@ -1,0 +1,109 @@
+<% content_for :title, "Ops Dashboard" %>
+
+<header class="page-header">
+  <div>
+    <p class="eyebrow">Live operations</p>
+    <h1>Sandbox control plane</h1>
+  </div>
+  <%= link_to "Scenarios", ops_scenarios_path, class: "secondary-button" %>
+</header>
+
+<section class="stat-grid">
+  <% @stats.each do |label, value| %>
+    <article class="stat-card">
+      <span><%= label.to_s.humanize %></span>
+      <strong><%= value %></strong>
+    </article>
+  <% end %>
+</section>
+
+<section class="two-column">
+  <article class="panel">
+    <div class="panel-header">
+      <h2>Recent payments</h2>
+      <%= link_to "View all", ops_payments_path %>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Reference</th>
+          <th>Status</th>
+          <th>Amount</th>
+          <th>App</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @recent_payments.each do |payment| %>
+          <tr>
+            <td><%= link_to payment.external_reference, ops_payment_path(payment) %></td>
+            <td><span class="status <%= payment.status %>"><%= payment.status %></span></td>
+            <td><%= number_to_currency(payment.amount_cents / 100.0, unit: payment.currency + " ") %></td>
+            <td><%= payment.developer_app.name %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </article>
+
+  <article class="panel">
+    <div class="panel-header">
+      <h2>Webhook pressure</h2>
+      <%= link_to "View all", ops_webhook_deliveries_path %>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Event</th>
+          <th>Status</th>
+          <th>Attempts</th>
+          <th>App</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @recent_webhooks.each do |delivery| %>
+          <tr>
+            <td><%= link_to delivery.event_type, ops_webhook_delivery_path(delivery) %></td>
+            <td><span class="status <%= delivery.status %>"><%= delivery.status %></span></td>
+            <td><%= delivery.attempts_count %></td>
+            <td><%= delivery.developer_app.name %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </article>
+</section>
+
+<section class="panel">
+  <div class="panel-header">
+    <h2>Recent audit trail</h2>
+    <%= link_to "View all", ops_audit_events_path %>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>Action</th>
+        <th>Actor</th>
+        <th>Target</th>
+        <th>Correlation</th>
+        <th>When</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% if @recent_audit_events.any? %>
+        <% @recent_audit_events.each do |audit_event| %>
+          <tr>
+            <td><%= link_to audit_event.action, ops_audit_event_path(audit_event) %></td>
+            <td><%= audit_event.actor_identifier || audit_event.actor_type || "system" %></td>
+            <td><%= audit_event.target_identifier || audit_event.target_type || "-" %></td>
+            <td><code><%= audit_event.correlation_id || "-" %></code></td>
+            <td><%= l(audit_event.created_at, format: :short) %></td>
+          </tr>
+        <% end %>
+      <% else %>
+        <tr>
+          <td colspan="5">No audit events yet.</td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</section>

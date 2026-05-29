@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= content_for(:title) || "OpenBank Ops" %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+    <%= yield :head %>
+    <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+  </head>
+
+  <body>
+    <div class="shell">
+      <% if authenticated? %>
+        <aside class="sidebar">
+          <div class="brand">
+            <span class="brand-mark">OB</span>
+            <div>
+              <strong>OpenBank</strong>
+              <span>Sandbox Ops</span>
+            </div>
+          </div>
+
+          <nav class="nav">
+            <%= link_to "Dashboard", ops_root_path %>
+            <%= link_to "Apps", ops_developer_apps_path %>
+            <%= link_to "Consents", ops_consents_path %>
+            <%= link_to "Payments", ops_payments_path %>
+            <%= link_to "Webhooks", ops_webhook_deliveries_path %>
+            <%= link_to "Scenarios", ops_scenarios_path %>
+            <%= link_to "Audit", ops_audit_events_path %>
+          </nav>
+
+          <div class="operator">
+            <span><%= current_user.email_address %></span>
+            <%= button_to "Sign out", session_path, method: :delete, class: "link-button" %>
+          </div>
+        </aside>
+      <% end %>
+
+      <main class="main">
+        <% flash.each do |type, message| %>
+          <div class="flash <%= type %>"><%= message %></div>
+        <% end %>
+
+        <%= yield %>
+      </main>
+    </div>
+  </body>
+</html>
