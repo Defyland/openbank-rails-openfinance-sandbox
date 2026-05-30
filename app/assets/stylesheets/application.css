@@ -270,6 +270,7 @@ pre {
 
 .status.authorized,
 .status.accepted,
+.status.settled,
 .status.delivered,
 .status.active {
   background: #e3f3ec;

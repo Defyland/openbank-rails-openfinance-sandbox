@@ -1,18 +1,23 @@
 failed_payment:
   developer_app: partner
   event_id: evt_fixture_failed_payment
-  event_type: payment.accepted
+  event_type: payment.settled
   aggregate_type: PaymentInitiation
   aggregate_id: <%= ActiveRecord::FixtureSet.identify(:accepted) %>
   status: failed
   payload:
-    event_type: payment.accepted
+    event_type: payment.settled
+    schema_version: 1
+    producer: openbank-sandbox
+    developer_app_id: app_fixture_partner
+    consent_id: cns_fixture_authorized
     payment_id: pay_fixture_accepted
-    status: accepted
+    correlation_id: corr-fixture-webhook
+    payload:
+      status: settled
   signature: fixture-signature
   idempotency_key: fixture-payment-webhook
   correlation_id: corr-fixture-webhook
   attempts_count: 1
   next_attempt_at: <%= 5.minutes.from_now %>
   last_error: Sandbox scenario forced webhook failure.
-

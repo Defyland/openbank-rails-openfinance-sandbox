@@ -13,9 +13,14 @@ class WebhookDelivery < ApplicationRecord
   validates :status, inclusion: { in: STATUSES }
   validates :attempts_count, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
 
-  def self.enqueue!(developer_app:, event_type:, aggregate:, payload:, correlation_id:)
+  def self.generate_event_id
+    "evt_#{SecureRandom.hex(12)}"
+  end
+
+  def self.enqueue!(developer_app:, event_type:, aggregate:, payload:, correlation_id:, event_id: nil)
     delivery = create!(
       developer_app: developer_app,
+      event_id: event_id,
       event_type: event_type,
       aggregate_type: aggregate.class.name,
       aggregate_id: aggregate.id,
@@ -50,7 +55,7 @@ class WebhookDelivery < ApplicationRecord
   private
 
   def assign_event_id
-    self.event_id ||= "evt_#{SecureRandom.hex(12)}"
+    self.event_id ||= self.class.generate_event_id
   end
 
   def assign_idempotency_key

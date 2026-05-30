@@ -49,6 +49,7 @@ module V1
     def revoke
       consent = find_consent
       previous_status = consent.status
+      active_tokens_count = consent.access_tokens.where(revoked_at: nil).count
 
       if consent.revoke!
         AuditTrail.record!(
@@ -57,7 +58,13 @@ module V1
           target: consent,
           metadata: { from: previous_status, to: consent.status }
         )
-        enqueue_consent_webhook!(consent, "consent.revoked")
+        enqueue_consent_webhook!(
+          consent,
+          "consent.revoked",
+          previous_status: previous_status,
+          revocation_reason: "partner_request",
+          tokens_revoked: active_tokens_count
+        )
       end
 
       render json: { consent: ApiSerializer.consent(consent) }
@@ -73,18 +80,33 @@ module V1
       params.require(:consent).permit(:customer_document_number, :external_id, :expires_at, permissions: [], metadata: {})
     end
 
-    def enqueue_consent_webhook!(consent, event_type)
+    def enqueue_consent_webhook!(consent, event_type, previous_status: nil, revocation_reason: nil, tokens_revoked: nil)
+      event_id = WebhookDelivery.generate_event_id
+      payload =
+        if event_type == "consent.authorized"
+          Sandbox::PartnerEvent.consent_authorized(
+            consent: consent,
+            event_id: event_id,
+            correlation_id: Current.correlation_id
+          )
+        else
+          Sandbox::PartnerEvent.consent_revoked(
+            consent: consent,
+            event_id: event_id,
+            correlation_id: Current.correlation_id,
+            revocation_reason: revocation_reason,
+            previous_status: previous_status,
+            tokens_revoked: tokens_revoked
+          )
+        end
+
       WebhookDelivery.enqueue!(
         developer_app: current_developer_app,
         event_type: event_type,
         aggregate: consent,
         correlation_id: Current.correlation_id,
-        payload: {
-          event_type: event_type,
-          consent_id: consent.external_id,
-          status: consent.status,
-          permissions: consent.permissions
-        }
+        event_id: event_id,
+        payload: payload
       )
     end
   end

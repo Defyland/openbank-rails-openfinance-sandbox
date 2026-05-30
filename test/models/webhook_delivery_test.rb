@@ -26,10 +26,10 @@ class WebhookDeliveryTest < ActiveSupport::TestCase
     app.update!(active_scenario_code: "webhook_retry")
     delivery = WebhookDelivery.create!(
       developer_app: app,
-      event_type: "payment.accepted",
+      event_type: "payment.settled",
       aggregate_type: "PaymentInitiation",
       aggregate_id: 321,
-      payload: { "status" => "accepted" }
+      payload: { "status" => "settled" }
     )
 
     delivery.deliver!
@@ -43,24 +43,24 @@ class WebhookDeliveryTest < ActiveSupport::TestCase
     app, = create_developer_app
     first_delivery = WebhookDelivery.create!(
       developer_app: app,
-      event_type: "payment.accepted",
+      event_type: "payment.settled",
       aggregate_type: "PaymentInitiation",
       aggregate_id: 123,
       payload: {
-        "event_type" => "payment.accepted",
-        "payment" => { "status" => "accepted", "amount_cents" => 9_900 },
+        "event_type" => "payment.settled",
+        "payment" => { "status" => "settled", "amount_cents" => 9_900 },
         "meta" => { "branch" => "0001", "account" => "12345-6" }
       }
     )
     second_delivery = WebhookDelivery.create!(
       developer_app: app,
-      event_type: "payment.accepted",
+      event_type: "payment.settled",
       aggregate_type: "PaymentInitiation",
       aggregate_id: 124,
       payload: {
         "meta" => { "account" => "12345-6", "branch" => "0001" },
-        "payment" => { "amount_cents" => 9_900, "status" => "accepted" },
-        "event_type" => "payment.accepted"
+        "payment" => { "amount_cents" => 9_900, "status" => "settled" },
+        "event_type" => "payment.settled"
       }
     )
 

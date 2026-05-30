@@ -16,7 +16,7 @@ module V1
         correlation_id: Current.correlation_id
       )
 
-      if payment.previously_new_record?
+      if payment.created_by_request?
         AuditTrail.record!(
           action: "v1.payment.created",
           actor: current_developer_app,
@@ -29,7 +29,7 @@ module V1
         )
       end
 
-      render json: { payment: ApiSerializer.payment(payment) }, status: payment.previously_new_record? ? :created : :ok
+      render json: { payment: ApiSerializer.payment(payment) }, status: payment.created_by_request? ? :created : :ok
     end
 
     def show

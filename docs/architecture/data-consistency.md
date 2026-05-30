@@ -2,7 +2,7 @@
 
 ## Transaction Boundaries
 
-Payment initiation is the main consistency-sensitive flow. `Sandbox::PaymentInitiator` creates or finds the idempotent payment inside a database transaction, applies ledger side effects for accepted payments, and enqueues the webhook record before the transaction returns.
+Payment initiation is the main consistency-sensitive flow. `Sandbox::PaymentInitiator` creates or finds the idempotent payment inside a database transaction, applies ledger side effects for eligible payments, marks successful payments as `settled`, and enqueues the webhook records before the transaction returns.
 
 Consent revocation updates consent state and revokes active tokens in one method call. API tests cover revoked-token behavior through the resource endpoints.
 

@@ -8,7 +8,10 @@ module Sandbox
 
       fingerprint = fingerprint_for(params)
       existing = PaymentInitiation.find_by(developer_app: developer_app, idempotency_key: idempotency_key)
-      return existing if existing.present? && existing.request_fingerprint == fingerprint
+      if existing.present? && existing.request_fingerprint == fingerprint
+        existing.created_by_request = false
+        return existing
+      end
       raise ActiveRecord::RecordNotUnique, "idempotency key reused with a different payload" if existing.present?
 
       PaymentInitiation.transaction do
@@ -31,9 +34,10 @@ module Sandbox
           processed_at: Time.current,
           metadata: params.fetch(:metadata, {})
         )
+        payment.created_by_request = true
 
-        persist_ledger_effect!(account, payment) if payment.accepted?
-        enqueue_webhook!(developer_app, payment, correlation_id)
+        ledger_transaction = settle_payment!(account, payment) if payment.accepted?
+        enqueue_webhooks!(developer_app, payment, ledger_transaction, correlation_id)
         payment
       end
     end
@@ -51,9 +55,9 @@ module Sandbox
       end
     end
 
-    def self.persist_ledger_effect!(account, payment)
+    def self.settle_payment!(account, payment)
       account.debit!(payment.amount_cents)
-      LedgerTransaction.create!(
+      ledger_transaction = LedgerTransaction.create!(
         account: account,
         transaction_type: "debit",
         amount_cents: payment.amount_cents,
@@ -62,25 +66,53 @@ module Sandbox
         category: "payment",
         metadata: { payment_id: payment.external_id }
       )
+      payment.update!(status: "settled")
+      ledger_transaction
     rescue InsufficientFundsError
       payment.update!(status: "rejected", failure_code: "INSUFFICIENT_FUNDS")
+      nil
     end
 
-    def self.enqueue_webhook!(developer_app, payment, correlation_id)
-      event_type = payment.accepted? ? "payment.accepted" : "payment.rejected"
+    def self.enqueue_webhooks!(developer_app, payment, ledger_transaction, correlation_id)
+      created_event_id = WebhookDelivery.generate_event_id
       WebhookDelivery.enqueue!(
         developer_app: developer_app,
-        event_type: event_type,
+        event_type: "payment.created",
         aggregate: payment,
         correlation_id: correlation_id,
-        payload: {
-          event_type: event_type,
-          payment_id: payment.external_id,
-          status: payment.status,
-          amount_cents: payment.amount_cents,
-          currency: payment.currency,
-          failure_code: payment.failure_code
-        }.compact
+        event_id: created_event_id,
+        payload: Sandbox::PartnerEvent.payment_created(
+          payment: payment,
+          event_id: created_event_id,
+          correlation_id: correlation_id
+        )
+      )
+
+      terminal_event_id = WebhookDelivery.generate_event_id
+      terminal_event_type = payment.settled? ? "payment.settled" : "payment.rejected"
+      terminal_payload =
+        if payment.settled?
+          Sandbox::PartnerEvent.payment_settled(
+            payment: payment,
+            ledger_transaction: ledger_transaction,
+            event_id: terminal_event_id,
+            correlation_id: correlation_id
+          )
+        else
+          Sandbox::PartnerEvent.payment_rejected(
+            payment: payment,
+            event_id: terminal_event_id,
+            correlation_id: correlation_id
+          )
+        end
+
+      WebhookDelivery.enqueue!(
+        developer_app: developer_app,
+        event_type: terminal_event_type,
+        aggregate: payment,
+        correlation_id: correlation_id,
+        event_id: terminal_event_id,
+        payload: terminal_payload
       )
     end
   end

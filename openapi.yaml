@@ -317,7 +317,7 @@ paths:
                   $ref: "#/components/schemas/PaymentCreate"
       responses:
         "201":
-          description: Payment accepted or rejected by scenario.
+          description: Payment settled or rejected by scenario.
           content:
             application/json:
               schema:

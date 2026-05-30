@@ -43,8 +43,8 @@ The envelope is shared across events so partners can build one receiver pipeline
 | --- | --- | --- |
 | `consent.authorized` | A consent moves from `awaiting_authorization` to `authorized`. | Cache consent permissions and begin token/resource tests. |
 | `consent.revoked` | An authorized consent is revoked by API, operator action, or policy simulation. | Stop using tokens tied to the consent and remove scheduled polling. |
-| `payment.created` | A payment request is accepted into the sandbox command model. | Correlate the payment by `payment_id`, `idempotency_key`, and `external_reference`. |
-| `payment.settled` | The sandbox applies the accepted payment effect to the simulated ledger. | Mark the partner-side payment as completed. |
+| `payment.created` | A payment request is persisted in the sandbox command model. | Correlate the payment by `payment_id`, `idempotency_key`, and `external_reference`. |
+| `payment.settled` | The sandbox applies the payment effect to the simulated ledger. | Mark the partner-side payment as completed. |
 | `payment.rejected` | The payment is rejected by deterministic scenario or validation/funds failure. | Surface `failure_code` and avoid retrying without a changed business instruction. |
 
 ## Signature Verification Contract

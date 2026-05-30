@@ -1,6 +1,8 @@
 class PaymentInitiation < ApplicationRecord
   STATUSES = %w[accepted rejected settled].freeze
 
+  attr_accessor :created_by_request
+
   belongs_to :developer_app
   belongs_to :consent
   belongs_to :account
@@ -19,6 +21,14 @@ class PaymentInitiation < ApplicationRecord
 
   def rejected?
     status == "rejected"
+  end
+
+  def settled?
+    status == "settled"
+  end
+
+  def created_by_request?
+    created_by_request == true
   end
 
   private

@@ -77,15 +77,18 @@ class OpenfinancePartnerFlowTest < ActionDispatch::IntegrationTest
 
     assert_response :created
     payment = json_response.fetch("payment")
-    assert_equal "accepted", payment.fetch("status")
+    assert_equal "settled", payment.fetch("status")
     assert_equal 75_000, account.reload.available_balance_cents
     assert_equal 1, AuditEvent.where(action: "v1.payment.created").count
 
     get "/v1/webhook_deliveries", headers: headers
     assert_response :success
-    delivery = json_response.fetch("webhook_deliveries").find { |item| item.fetch("event_type") == "payment.accepted" }
+    delivery = json_response.fetch("webhook_deliveries").find { |item| item.fetch("event_type") == "payment.settled" }
     assert_equal "delivered", delivery.fetch("status")
     assert_equal "corr-flow", delivery.fetch("correlation_id")
+    assert_equal 1, delivery.dig("payload", "schema_version")
+    assert_equal "payment.settled", delivery.dig("payload", "event_type")
+    assert_equal "settled", delivery.dig("payload", "payload", "status")
   end
 
   test "repeated consent lifecycle calls stay idempotent and do not duplicate webhooks" do
@@ -107,7 +110,10 @@ class OpenfinancePartnerFlowTest < ActionDispatch::IntegrationTest
       patch "/v1/consents/#{consent_id}/authorize", headers: headers, as: :json
     end
     assert_response :success
+    consent_delivery = WebhookDelivery.find_by!(event_type: "consent.authorized")
     assert_equal 1, WebhookDelivery.where(event_type: "consent.authorized").count
+    assert_equal 1, consent_delivery.payload.fetch("schema_version")
+    assert_equal "consent.authorized", consent_delivery.payload.fetch("event_type")
     assert_equal 1, AuditEvent.where(action: "v1.consent.authorized").count
 
     perform_enqueued_jobs do

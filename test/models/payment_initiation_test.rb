@@ -1,7 +1,7 @@
 require "test_helper"
 
 class PaymentInitiationTest < ActiveSupport::TestCase
-  test "accepted payment debits account and writes ledger transaction" do
+  test "settled payment debits account and writes lifecycle webhooks" do
     customer, account = create_customer_with_account(balance_cents: 50_000)
     app, = create_developer_app
     consent = create_authorized_consent(app: app, customer: customer)
@@ -23,9 +23,11 @@ class PaymentInitiationTest < ActiveSupport::TestCase
       }
     )
 
-    assert_equal "accepted", payment.status
+    assert_equal "settled", payment.status
     assert_equal 38_000, account.reload.available_balance_cents
     assert_equal "payment", account.ledger_transactions.order(:created_at).last.category
+    assert_equal 1, WebhookDelivery.where(event_type: "payment.created", aggregate_id: payment.id).count
+    assert_equal 1, WebhookDelivery.where(event_type: "payment.settled", aggregate_id: payment.id).count
   end
 
   test "idempotency key returns the original payment for the same payload" do
@@ -76,5 +78,7 @@ class PaymentInitiationTest < ActiveSupport::TestCase
     assert_equal "rejected", payment.status
     assert_equal "SANDBOX_PAYMENT_REJECTED", payment.failure_code
     assert_equal 50_000, account.reload.available_balance_cents
+    assert_equal 1, WebhookDelivery.where(event_type: "payment.created", aggregate_id: payment.id).count
+    assert_equal 1, WebhookDelivery.where(event_type: "payment.rejected", aggregate_id: payment.id).count
   end
 end
