@@ -6,6 +6,7 @@ class OpenapiResponseContractTest < ActionDispatch::IntegrationTest
     document = YAML.load_file(Rails.root.join("openapi.yaml"))
 
     assert_equal "3.1.0", document.fetch("openapi")
+    assert_openapi_document_valid
     assert_includes document.fetch("paths").keys, "/v1/consents"
     assert_includes document.fetch("paths").keys, "/v1/oauth/token"
     assert_includes document.fetch("paths").keys, "/v1/payments"

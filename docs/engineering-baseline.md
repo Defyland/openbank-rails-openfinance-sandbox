@@ -12,6 +12,7 @@ This repository now implements the functional Rails API slice required by the in
 - `docs/adr/`, `docs/architecture/`, `docs/benchmarks/`, `docs/api/`, `docs/diagrams/`, and `docs/runbooks/`
 - PostgreSQL primary configuration with SQLite fallback for deterministic local review
 - Minitest model, request, failure, authorization, system, and repository compliance coverage
+- OpenAPI response contract checks backed by JSON Schema validation
 - GitHub Actions for lint, tests, seed validation, security checks, OpenAPI linting, Docker build, and coverage upload
 - structured request/correlation IDs, JSON logs, persisted audit events, opt-in OpenTelemetry instrumentation, readiness, liveness, Prometheus metrics, and Grafana dashboard definition
 - k6 smoke, load, stress, and spike scripts

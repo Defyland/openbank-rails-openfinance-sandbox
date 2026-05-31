@@ -105,7 +105,7 @@ The test suite covers:
 - revoked and expired consent behavior
 - idempotency conflict behavior
 - rate limiting and standardized error payloads
-- OpenAPI and repository evidence compliance
+- OpenAPI document validity and real response payload conformance through JSON Schema
 - `/ops` authentication, scenario activation, consent revocation, and webhook replay through Capybara system tests
 
 Run the complete suite with:
