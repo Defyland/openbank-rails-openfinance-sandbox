@@ -133,7 +133,7 @@ class PaymentInitiationTest < ActiveSupport::TestCase
     )
 
     assert_equal "rejected", payment.status
-    assert_equal "SANDBOX_PAYMENT_REJECTED", payment.failure_code
+    assert_equal "SCENARIO_REJECTED", payment.failure_code
     assert_equal 50_000, account.reload.available_balance_cents
     assert_equal 1, WebhookDelivery.where(event_type: "payment.created", aggregate_id: payment.id).count
     assert_equal 1, WebhookDelivery.where(event_type: "payment.rejected", aggregate_id: payment.id).count

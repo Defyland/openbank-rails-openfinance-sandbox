@@ -9,7 +9,7 @@ module Sandbox
       "payment_rejected" => {
         name: "Payment rejected",
         description: "Payment initiations are accepted by the API but rejected by the simulated bank core.",
-        config: { "reject_payments" => true, "failure_code" => "SANDBOX_PAYMENT_REJECTED" }
+        config: { "reject_payments" => true, "failure_code" => "SCENARIO_REJECTED" }
       },
       "expired_consent" => {
         name: "Expired consent",

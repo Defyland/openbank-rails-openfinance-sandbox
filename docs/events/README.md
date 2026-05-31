@@ -24,6 +24,7 @@ The envelope is shared across events so partners can build one receiver pipeline
 - Consumers deduplicate by `event_id`.
 - Delivery is at-least-once; repeated webhook deliveries are valid and must not create duplicate partner-side effects.
 - Consumers must reject events with unsupported `schema_version`.
+- Published schemas in this directory are validated by the test suite against the actual event builders.
 - Consent revocation events must be processed even if token caches are stale.
 - Payment initiation events must preserve idempotency and `correlation_id`.
 - Webhook signatures cover the canonical event body and timestamp.
