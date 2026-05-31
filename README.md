@@ -150,6 +150,7 @@ Security coverage is intentionally product-shaped:
 - permissions are enforced per endpoint
 - sensitive parameters are filtered from logs
 - app-level rate limiting protects APIs from abusive clients
+- outbound webhook delivery blocks private, loopback, link-local, multicast, and documentation networks by default
 - revoking a consent revokes active tokens
 - consent transitions are guarded so duplicate lifecycle calls do not emit duplicate events
 - operator sessions expire server-side after inactivity and are trimmed on a recurring schedule
@@ -240,7 +241,7 @@ Supported scenarios:
 - Add mTLS/JWKS simulation for stronger partner authentication.
 - Add FAPI-style authorization code and PAR/JAR simulation.
 - Add richer Open Finance Brazil payload profiles.
-- Add webhook URL allowlisting/private-network egress controls for shared hosted environments.
+- Add tenant-specific webhook URL allowlists for shared hosted environments.
 - Add multi-currency account fixtures and scheduled transaction imports.
 - Add Postgres advisory-lock based payment processing benchmarks.
 - Run a real managed PostgreSQL restore drill and attach evidence to `docs/runbooks/postgres-backup-restore.md`.

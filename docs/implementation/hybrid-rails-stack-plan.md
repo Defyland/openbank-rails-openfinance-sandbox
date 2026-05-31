@@ -44,7 +44,7 @@ Move OpenBank Sandbox closer to the modern Rails production stack while preservi
 ## Phase 4: Follow-Up Candidates
 
 - Move local default from SQLite to PostgreSQL after Ruby 3.4 and PostgreSQL are guaranteed in the developer environment.
-- Add webhook URL allowlisting and private-network egress controls if the sandbox is hosted for untrusted tenants.
+- Add tenant-specific webhook URL allowlists if the sandbox is hosted for untrusted tenants.
 - Add Active Storage-backed conformance evidence uploads if partner certification artifacts become part of the product.
 - Add Solid Cable live updates for webhook delivery state if operational users need real-time status.
 

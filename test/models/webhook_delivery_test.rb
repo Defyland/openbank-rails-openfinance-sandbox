@@ -66,6 +66,27 @@ class WebhookDeliveryTest < ActiveSupport::TestCase
     assert_enqueued_jobs 1, only: WebhookDeliveryJob
   end
 
+  test "webhook url text does not force delivery failure outside explicit scenarios" do
+    app, = create_developer_app(webhook_url: "https://fail.example.test/webhooks")
+    delivery = WebhookDelivery.create!(
+      developer_app: app,
+      event_type: "payment.settled",
+      aggregate_type: "PaymentInitiation",
+      aggregate_id: 321,
+      payload: { "status" => "settled" }
+    )
+    http_client = Class.new do
+      def self.deliver!(_delivery)
+        Sandbox::WebhookHttpClient::Response.new(202, "accepted")
+      end
+    end
+
+    delivery.deliver!(http_client: http_client)
+
+    assert_equal "delivered", delivery.status
+    assert_nil delivery.last_error
+  end
+
   test "http delivery failure schedules retry and records response status" do
     app, = create_developer_app
     delivery = WebhookDelivery.create!(

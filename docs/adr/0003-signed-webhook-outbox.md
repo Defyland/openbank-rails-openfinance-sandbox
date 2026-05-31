@@ -17,4 +17,4 @@ Persist every outbound event as a `WebhookDelivery` record before delivery. Gene
 - Mutations and event publication share a database transaction boundary.
 - Failed webhooks can be inspected and replayed.
 - Delivery uses an injectable HTTP adapter so tests are deterministic without external services while app environments can perform real outbound POSTs.
-- Shared hosted environments still need egress controls and webhook URL allowlisting before exposing this to untrusted tenants.
+- Shared hosted environments still benefit from tenant-specific webhook URL allowlisting, even though private-network destinations are blocked by default.

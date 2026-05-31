@@ -14,4 +14,4 @@ OpenBank Sandbox needs a Rails API, operator surface, PostgreSQL, Solid Queue, c
 - Kubernetes and Helm are deferred until sandbox scenarios, queue ownership, and webhook retry policy stabilize.
 - Real Open Finance production controls such as mTLS and JWKS are deferred because this project is a simulator.
 - Managed secrets and token key rotation should be added before any public shared sandbox deployment.
-- Webhook URL allowlisting and private-network egress protection should be added before accepting untrusted tenant webhook URLs.
+- Webhook delivery blocks private-network destinations by default. Tenant-specific webhook URL allowlists should still be added before exposing a shared hosted sandbox.

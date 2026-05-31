@@ -40,7 +40,7 @@ class WebhookDelivery < ApplicationRecord
 
       increment!(:attempts_count)
 
-      if Sandbox::ScenarioRegistry.webhook_failure?(developer_app.active_scenario_code) || developer_app.webhook_url.include?("fail")
+      if Sandbox::ScenarioRegistry.webhook_failure?(developer_app.active_scenario_code)
         fail_delivery!("Sandbox scenario forced webhook failure.", response_status: nil)
       else
         response = http_client.deliver!(self)
