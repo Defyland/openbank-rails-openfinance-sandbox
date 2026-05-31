@@ -136,6 +136,60 @@ class WebhookDeliveryTest < ActiveSupport::TestCase
     assert_nil delivery.next_attempt_at
   end
 
+  test "replay resets delivery attempt budget" do
+    app, = create_developer_app
+    delivery = WebhookDelivery.create!(
+      developer_app: app,
+      event_type: "payment.settled",
+      aggregate_type: "PaymentInitiation",
+      aggregate_id: 321,
+      status: "dead",
+      attempts_count: WebhookDelivery::MAX_ATTEMPTS,
+      next_attempt_at: nil,
+      last_error: "HTTP 503",
+      last_response_status: 503,
+      payload: { "status" => "settled" }
+    )
+
+    assert_enqueued_with(job: WebhookDeliveryJob, args: [ delivery.id ]) do
+      delivery.replay!
+    end
+
+    assert_equal "pending", delivery.status
+    assert_equal 0, delivery.attempts_count
+    assert_nil delivery.next_attempt_at
+    assert_nil delivery.last_error
+    assert_nil delivery.last_response_status
+  end
+
+  test "operational updates preserve the original delivery signature" do
+    app, = create_developer_app
+    delivery = WebhookDelivery.create!(
+      developer_app: app,
+      event_type: "payment.settled",
+      aggregate_type: "PaymentInitiation",
+      aggregate_id: 321,
+      payload: { "status" => "settled" }
+    )
+    original_signature = delivery.signature
+    app.update_column(:webhook_signing_secret_ciphertext, DeveloperApp.encrypt_secret("whsec_sandbox_rotated"))
+    http_client = Class.new do
+      class << self
+        attr_accessor :signature
+      end
+
+      def self.deliver!(delivery)
+        self.signature = delivery.delivery_headers.fetch("X-OpenBank-Signature")
+        Sandbox::WebhookHttpClient::Response.new(202, "accepted")
+      end
+    end
+
+    delivery.deliver!(http_client: http_client)
+
+    assert_equal original_signature, http_client.signature
+    assert_equal original_signature, delivery.reload.signature
+  end
+
   test "canonical payload is stable for nested hashes" do
     app, = create_developer_app
     first_delivery = WebhookDelivery.create!(

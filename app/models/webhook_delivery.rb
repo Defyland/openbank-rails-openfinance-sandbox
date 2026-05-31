@@ -7,7 +7,7 @@ class WebhookDelivery < ApplicationRecord
   before_validation :assign_event_id, on: :create
   before_validation :assign_idempotency_key, on: :create
   before_validation :assign_signature_timestamp, on: :create
-  before_validation :assign_signature
+  before_validation :assign_signature, if: :signature_needs_refresh?
 
   validates :event_id, :event_type, :aggregate_type, :aggregate_id, :payload, :signature, :idempotency_key, presence: true
   validates :event_id, :idempotency_key, uniqueness: true
@@ -65,7 +65,14 @@ class WebhookDelivery < ApplicationRecord
   end
 
   def replay!
-    update!(status: "pending", next_attempt_at: nil, delivered_at: nil, last_error: nil, last_response_status: nil)
+    update!(
+      status: "pending",
+      attempts_count: 0,
+      next_attempt_at: nil,
+      delivered_at: nil,
+      last_error: nil,
+      last_response_status: nil
+    )
     WebhookDeliveryJob.perform_later(id)
   end
 
@@ -104,6 +111,10 @@ class WebhookDelivery < ApplicationRecord
     return if developer_app.nil?
 
     self.signature = OpenSSL::HMAC.hexdigest("SHA256", developer_app.webhook_signing_secret, signature_base)
+  end
+
+  def signature_needs_refresh?
+    signature.blank? || will_save_change_to_payload? || will_save_change_to_signature_timestamp?
   end
 
   def fail_delivery!(message, response_status:)
