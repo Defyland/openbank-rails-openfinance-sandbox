@@ -32,8 +32,9 @@ This threat model focuses on the sandbox boundary that matters most for partner 
 | Stolen bearer token | Attacker obtains a bearer token. | Short TTL, digest storage, consent-scoped permissions, no query-string token support. | Blast radius is the consent permissions and token lifetime. Real FAPI production would require sender-constrained tokens. |
 | Overbroad token permissions | Token grants more permissions than the consent. | Token permissions must be a subset of consent permissions. | Token issuance fails; resource APIs also enforce endpoint permissions. |
 | Idempotency replay with changed payload | Partner or attacker reuses an idempotency key with different payment details. | Payment request fingerprint conflict returns HTTP 409. | Partner must use a new idempotency key or repeat the exact same request. |
-| Signed webhook tampering | Intermediary changes webhook payload or replays modified body. | HMAC-SHA256 signature over canonical payload; event idempotency key persisted. | Partner should reject payloads whose computed signature does not match delivery signature. |
+| Signed webhook tampering | Intermediary changes webhook payload or replays modified body. | HMAC-SHA256 signature over timestamp plus canonical payload; event idempotency key persisted. | Partner should reject payloads whose computed signature does not match delivery signature. |
 | Webhook replay | Same signed delivery arrives more than once. | Stable `event_id`, delivery idempotency key, and replay history. | Partner must deduplicate by `event_id` and treat events as at-least-once delivery. |
+| Webhook SSRF | Tenant registers a webhook URL pointing to internal infrastructure. | URL validation currently requires HTTP(S); shared hosted deployments must add allowlists and private-network egress controls before accepting untrusted tenants. | Operators should not expose the sandbox as a public multi-tenant service without egress policy. |
 | Rate limit abuse | Client floods token/resource/payment endpoints. | App/IP/token rate limiting with `Retry-After` response. | HTTP 429; partner must back off and retry after the advertised window. |
 | Sensitive log exposure | Secrets, tokens, documents, or authorization headers appear in logs. | Rails parameter filtering for secrets, tokens, authorization, and documents. | Logs remain usable for support without leaking primary credentials. |
 | Untraceable privileged action | Operator or partner action changes sensitive state without audit evidence. | Audit events persist actor, target, request ID, correlation ID, IP address, user agent, and metadata for sensitive API and operator workflows. | Incident review can reconstruct who did what and when. |
@@ -47,6 +48,7 @@ The sandbox simulates OAuth/FAPI concepts but does not claim certification cover
 - Bearer tokens are consent-scoped and short-lived, but they are not sender-constrained through mTLS or DPoP.
 - Resource servers reject expired/revoked tokens and insufficient permissions, matching the partner failure modes this sandbox is meant to exercise.
 - Webhook signing is HMAC-based for deterministic local testing; production Open Finance message signing may require ecosystem-specific JOSE/JWS profiles.
+- Webhook signing secrets are returned once and stored encrypted, but hosted deployments still need secret rotation and egress policy.
 
 ## Residual Risk
 

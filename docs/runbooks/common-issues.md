@@ -58,5 +58,5 @@ Symptoms:
 Actions:
 
 1. Check active scenario; `webhook_retry` intentionally fails attempts.
-2. Inspect `last_error` and `attempts_count`.
+2. Inspect `last_response_status`, `last_error`, `attempts_count`, and `next_attempt_at`.
 3. Use `POST /v1/webhook_deliveries/:id/replay` after fixing the partner endpoint.

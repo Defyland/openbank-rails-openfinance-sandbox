@@ -13,6 +13,8 @@ curl -s http://localhost:3000/v1/developer_apps \
   }'
 ```
 
+The create response returns one-time `client_secret` and `webhook_signing_secret` values. Persist both before discarding the response body.
+
 ## Create and Authorize Consent
 
 ```bash

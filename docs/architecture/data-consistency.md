@@ -2,13 +2,13 @@
 
 ## Transaction Boundaries
 
-Payment initiation is the main consistency-sensitive flow. `Sandbox::PaymentInitiator` creates or finds the idempotent payment inside a database transaction, applies ledger side effects for eligible payments, marks successful payments as `settled`, and enqueues the webhook records before the transaction returns.
+Payment initiation is the main consistency-sensitive flow. `Sandbox::PaymentInitiator` creates or finds the idempotent payment inside a database transaction, applies ledger side effects for eligible payments, marks successful payments as `settled`, and persists webhook records before the transaction returns. Active Job enqueueing is configured to happen after transaction commit so workers do not race uncommitted primary records.
 
 Consent revocation updates consent state and revokes active tokens in one method call. API tests cover revoked-token behavior through the resource endpoints.
 
 ## Idempotency
 
-Payments use `developer_app_id + idempotency_key` as a unique key. A request fingerprint is calculated from canonical JSON. Reusing a key with the same payload returns the original payment. Reusing it with a different payload returns conflict.
+Payments use `developer_app_id + idempotency_key` as a unique key. A request fingerprint is calculated from canonical JSON. Reusing a key with the same payload returns the original payment, including when a concurrent insert wins the race after the pre-check. Reusing it with a different payload returns conflict.
 
 ## Indexes and Constraints
 

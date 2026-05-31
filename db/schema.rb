@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_29_170000) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_31_000100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -138,6 +138,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_29_170000) do
     t.integer "rate_limit_per_minute", default: 120, null: false
     t.string "status", default: "active", null: false
     t.datetime "updated_at", null: false
+    t.text "webhook_signing_secret_ciphertext"
     t.string "webhook_url", null: false
     t.index ["client_id"], name: "index_developer_apps_on_client_id", unique: true
     t.index ["status", "active_scenario_code"], name: "index_developer_apps_on_status_and_active_scenario_code"
@@ -251,9 +252,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_29_170000) do
     t.string "event_type", null: false
     t.string "idempotency_key", null: false
     t.text "last_error"
+    t.integer "last_response_status"
     t.datetime "next_attempt_at"
     t.json "payload", default: {}, null: false
     t.string "signature", null: false
+    t.datetime "signature_timestamp"
     t.string "status", default: "pending", null: false
     t.datetime "updated_at", null: false
     t.index ["developer_app_id", "status"], name: "index_webhook_deliveries_on_developer_app_id_and_status"

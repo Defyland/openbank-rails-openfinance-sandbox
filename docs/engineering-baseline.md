@@ -23,8 +23,8 @@ This repository now implements the functional Rails API slice required by the in
 - consent as the central authorization aggregate
 - permission checks across every simulated Open Finance resource endpoint
 - app-scoped sandbox scenarios for deterministic partner QA
-- signed webhook delivery records with retry, replay, and delivery history
-- idempotent payment initiation with payload fingerprinting
+- signed outbound webhook delivery with retry, replay, response status, and delivery history
+- idempotent payment initiation with payload fingerprinting and concurrent insert recovery
 - cross-app and cross-customer isolation tests
 
 ## Current validation gate
@@ -32,8 +32,10 @@ This repository now implements the functional Rails API slice required by the in
 The senior portfolio gate is the project CI command:
 
 ```bash
-DATABASE_ADAPTER=sqlite3 ruby bin/ci
+bin/ci
 ```
+
+Local reviewers without PostgreSQL can still run targeted checks with `DATABASE_ADAPTER=sqlite3`, but the GitHub Actions gate explicitly uses PostgreSQL.
 
 Last local senior gate: 2026-05-29.
 
@@ -50,5 +52,5 @@ Passed checks:
 
 Senior review posture:
 
-- Strong hire-level evidence: clear product narrative, Rails-native architecture decisions, scoped API auth, app/customer isolation tests, webhook outbox, deterministic failure scenarios, operations UI, audit trail, security automation, CI, Docker/Kamal readiness, and measured performance.
-- Production caveats to discuss in an interview: external SMTP/storage provider selection, managed PostgreSQL backup/restore drills, real APM/exporter credentials, SLO ownership, and horizontal scaling thresholds for moving Solid Queue/Cache/Cable off the primary database.
+- Strong hire-level evidence: clear product narrative, Rails-native architecture decisions, scoped API auth, app/customer isolation tests, real-but-injectable webhook delivery, deterministic failure scenarios, operations UI, audit trail, security automation, CI, Docker/Kamal readiness, and measured performance.
+- Production caveats to discuss in an interview: external SMTP/storage provider selection, managed PostgreSQL backup/restore drills, real APM/exporter credentials, SLO ownership, webhook egress allowlisting, and horizontal scaling thresholds for moving Solid Queue/Cache/Cable off the primary database.

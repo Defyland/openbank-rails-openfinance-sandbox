@@ -49,12 +49,12 @@ The envelope is shared across events so partners can build one receiver pipeline
 
 ## Signature Verification Contract
 
-Sandbox webhook deliveries are signed with HMAC-SHA256 over the canonical JSON payload persisted in `webhook_deliveries`.
+Sandbox webhook deliveries are signed with HMAC-SHA256 over `signature_timestamp.canonical_json_body`. The timestamp is sent in `X-OpenBank-Signature-Timestamp`, and the hex digest is sent in `X-OpenBank-Signature`.
 
 Partner receivers should:
 
 1. Rebuild the canonical JSON body using deterministic key ordering.
-2. Compute HMAC-SHA256 with the app webhook signing secret.
+2. Compute HMAC-SHA256 with the app webhook signing secret over `timestamp + "." + canonical_body`.
 3. Compare with the delivery signature using constant-time comparison.
 4. Deduplicate by `event_id`.
 5. Persist the raw body, signature, and `correlation_id` for support.

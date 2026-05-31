@@ -10,11 +10,11 @@ Partners need to test webhook signature verification, retries, replay, and deliv
 
 ## Decision
 
-Persist every outbound event as a `WebhookDelivery` record before delivery. Sign canonical JSON payloads with HMAC-SHA256 derived from the developer app credential digest and Rails secret key base. Process delivery attempts through Active Job and keep attempts, next retry time, last error, and terminal state.
+Persist every outbound event as a `WebhookDelivery` record before delivery. Generate a one-time partner webhook signing secret at app registration, store it encrypted, and sign `signature_timestamp.canonical_json_body` with HMAC-SHA256. Process HTTP delivery attempts through Active Job and keep attempts, next retry time, last response status, last error, and terminal state.
 
 ## Consequences
 
 - Mutations and event publication share a database transaction boundary.
 - Failed webhooks can be inspected and replayed.
-- Delivery is deterministic in tests and scenario-driven in sandbox usage.
-- A production HTTP delivery adapter can be added later without changing the API contract or event table.
+- Delivery uses an injectable HTTP adapter so tests are deterministic without external services while app environments can perform real outbound POSTs.
+- Shared hosted environments still need egress controls and webhook URL allowlisting before exposing this to untrusted tenants.

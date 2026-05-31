@@ -16,6 +16,8 @@ class OpenfinancePartnerFlowTest < ActionDispatch::IntegrationTest
     app_payload = json_response.fetch("developer_app")
     app = DeveloperApp.find_by!(client_id: app_payload.fetch("id"))
     secret = app_payload.fetch("client_secret")
+    webhook_signing_secret = app_payload.fetch("webhook_signing_secret")
+    assert_equal webhook_signing_secret, app.webhook_signing_secret
     assert_equal 1, AuditEvent.where(action: "v1.developer_app.created", target: app).count
     headers = client_headers(app, secret)
 

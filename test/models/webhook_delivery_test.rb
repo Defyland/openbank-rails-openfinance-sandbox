@@ -1,7 +1,7 @@
 require "test_helper"
 
 class WebhookDeliveryTest < ActiveSupport::TestCase
-  test "signs canonical payload and marks successful delivery" do
+  test "signs canonical payload with timestamp and marks successful http delivery" do
     app, = create_developer_app
     delivery = WebhookDelivery.create!(
       developer_app: app,
@@ -10,15 +10,41 @@ class WebhookDeliveryTest < ActiveSupport::TestCase
       aggregate_id: 123,
       payload: { "status" => "authorized", "consent_id" => "cns_1" }
     )
+    http_client = Class.new do
+      class << self
+        attr_accessor :requests
+      end
+      self.requests = []
 
-    expected_signature = OpenSSL::HMAC.hexdigest("SHA256", app.webhook_signing_secret, delivery.canonical_payload)
+      def self.deliver!(delivery)
+        requests << {
+          url: delivery.developer_app.webhook_url,
+          body: delivery.canonical_payload,
+          headers: delivery.delivery_headers
+        }
+        Sandbox::WebhookHttpClient::Response.new(202, "accepted")
+      end
+    end
+
+    expected_signature = OpenSSL::HMAC.hexdigest(
+      "SHA256",
+      app.webhook_signing_secret,
+      "#{delivery.signature_timestamp.iso8601}.#{delivery.canonical_payload}"
+    )
     assert_equal expected_signature, delivery.signature
 
-    delivery.deliver!
+    delivery.deliver!(http_client: http_client)
 
     assert_equal "delivered", delivery.status
     assert_equal 1, delivery.attempts_count
     assert_not_nil delivery.delivered_at
+    request = http_client.requests.fetch(0)
+    assert_equal app.webhook_url, request.fetch(:url)
+    assert_equal delivery.canonical_payload, request.fetch(:body)
+    assert_equal delivery.event_id, request.dig(:headers, "X-OpenBank-Event-ID")
+    assert_equal delivery.event_type, request.dig(:headers, "X-OpenBank-Event-Type")
+    assert_equal delivery.signature, request.dig(:headers, "X-OpenBank-Signature")
+    assert_equal delivery.signature_timestamp.iso8601, request.dig(:headers, "X-OpenBank-Signature-Timestamp")
   end
 
   test "webhook retry scenario fails and schedules next attempt" do
@@ -37,6 +63,56 @@ class WebhookDeliveryTest < ActiveSupport::TestCase
     assert_equal "failed", delivery.status
     assert_equal 1, delivery.attempts_count
     assert_not_nil delivery.next_attempt_at
+    assert_enqueued_jobs 1, only: WebhookDeliveryJob
+  end
+
+  test "http delivery failure schedules retry and records response status" do
+    app, = create_developer_app
+    delivery = WebhookDelivery.create!(
+      developer_app: app,
+      event_type: "payment.settled",
+      aggregate_type: "PaymentInitiation",
+      aggregate_id: 321,
+      payload: { "status" => "settled" }
+    )
+    http_client = Class.new do
+      def self.deliver!(_delivery)
+        Sandbox::WebhookHttpClient::Response.new(503, "unavailable")
+      end
+    end
+
+    assert_enqueued_with(job: WebhookDeliveryJob, args: [ delivery.id ]) do
+      delivery.deliver!(http_client: http_client)
+    end
+
+    assert_equal "failed", delivery.status
+    assert_equal 503, delivery.last_response_status
+    assert_match "HTTP 503", delivery.last_error
+    assert_not_nil delivery.next_attempt_at
+  end
+
+  test "max attempts moves delivery to dead letter without scheduling another retry" do
+    app, = create_developer_app
+    delivery = WebhookDelivery.create!(
+      developer_app: app,
+      event_type: "payment.settled",
+      aggregate_type: "PaymentInitiation",
+      aggregate_id: 321,
+      attempts_count: WebhookDelivery::MAX_ATTEMPTS - 1,
+      payload: { "status" => "settled" }
+    )
+    http_client = Class.new do
+      def self.deliver!(_delivery)
+        Sandbox::WebhookHttpClient::Response.new(503, "unavailable")
+      end
+    end
+
+    assert_no_enqueued_jobs only: WebhookDeliveryJob do
+      delivery.deliver!(http_client: http_client)
+    end
+
+    assert_equal "dead", delivery.status
+    assert_nil delivery.next_attempt_at
   end
 
   test "canonical payload is stable for nested hashes" do
@@ -57,6 +133,7 @@ class WebhookDeliveryTest < ActiveSupport::TestCase
       event_type: "payment.settled",
       aggregate_type: "PaymentInitiation",
       aggregate_id: 124,
+      signature_timestamp: first_delivery.signature_timestamp,
       payload: {
         "meta" => { "account" => "12345-6", "branch" => "0001" },
         "payment" => { "amount_cents" => 9_900, "status" => "settled" },

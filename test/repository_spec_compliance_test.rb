@@ -1,4 +1,5 @@
 require "test_helper"
+require "yaml"
 
 class RepositorySpecComplianceTest < ActiveSupport::TestCase
   REQUIRED_PATHS = %w[
@@ -69,5 +70,13 @@ class RepositorySpecComplianceTest < ActiveSupport::TestCase
     missing = required_headings.reject { |heading| readme.include?(heading) }
 
     assert_empty missing, "README missing required sections: #{missing.join(', ')}"
+  end
+
+  test "CI exercises PostgreSQL instead of silently falling back to SQLite" do
+    workflow = YAML.load_file(Rails.root.join(".github/workflows/ci.yml"))
+    test_helper = Rails.root.join("test/test_helper.rb").read
+
+    assert_equal "postgresql", workflow.dig("jobs", "quality", "env", "DATABASE_ADAPTER")
+    refute_includes test_helper, 'ENV["DATABASE_ADAPTER"] ||= "sqlite3"'
   end
 end

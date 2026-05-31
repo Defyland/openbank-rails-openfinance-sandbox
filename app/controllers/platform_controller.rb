@@ -1,4 +1,6 @@
 class PlatformController < ApiController
+  skip_before_action :enforce_rate_limit!
+
   def live
     render json: { status: "ok", service: "openbank-sandbox", checked_at: Time.current.iso8601 }
   end

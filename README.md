@@ -22,7 +22,7 @@ Partner teams need repeatable banking integration environments where they can va
 - OAuth-style bearer token issuance tied to an authorized consent.
 - Consent-scoped account, balance, and transaction APIs.
 - Idempotent payment initiation with deterministic accept/reject behavior.
-- Signed webhook delivery records with retry, replay, attempts, and dead-letter state.
+- Signed outbound webhook delivery with retry, replay, attempts, response status, and dead-letter state.
 - Scenario engine for happy path, payment rejection, expired consent, webhook retry, and slow bank simulations.
 - Authenticated `/ops` console for consent audit, payment inspection, scenario control, and webhook replay.
 - Health, readiness, Prometheus metrics, structured logs, request IDs, correlation IDs, audit events, and OpenTelemetry instrumentation.
@@ -31,7 +31,7 @@ Partner teams need repeatable banking integration environments where they can va
 
 The application is a Rails modular monolith. Partner endpoints under `/v1` inherit from `ApiController < ActionController::API` so the HTTP contract remains lean and sessionless. Browser endpoints under `/ops` inherit from `ApplicationController < ActionController::Base` to use Rails sessions, cookies, CSRF protection, ERB, Turbo, Stimulus, Importmap, and Propshaft.
 
-The primary database target is PostgreSQL. A SQLite fallback is available through `DATABASE_ADAPTER=sqlite3` so tests and portfolio review can run without an external database. Background work uses Active Job with Solid Queue in app environments and the test adapter in tests. Production configuration separates primary, cache, queue, and cable databases for Solid Cache, Solid Queue, and Solid Cable.
+The primary database target is PostgreSQL, and CI exercises PostgreSQL explicitly. A SQLite fallback is available through `DATABASE_ADAPTER=sqlite3` so local review can run without an external database. Background work uses Active Job with Solid Queue in app environments and the test adapter in tests. Production configuration separates primary, cache, queue, and cable databases for Solid Cache, Solid Queue, and Solid Cable.
 
 ## Tech stack
 
@@ -51,7 +51,7 @@ The primary database target is PostgreSQL. A SQLite fallback is available throug
 
 ## Domain model
 
-- `DeveloperApp`: partner tenant, client credentials, webhook URL, rate limit, and active scenario.
+- `DeveloperApp`: partner tenant, client credentials, one-time webhook signing secret, webhook URL, rate limit, and active scenario.
 - `SandboxCustomer`: simulated bank customer with document number, segment, and risk profile.
 - `Consent`: core authorization aggregate with status, permissions, expiration, customer, and app scope.
 - `AccessToken`: bearer token digest tied to a consent and permission subset.
@@ -75,7 +75,7 @@ OAuth/FAPI behavior is simulated for deterministic partner testing: token issuan
 
 ## Async or event architecture
 
-Webhook delivery is modeled as an outbox-style table (`webhook_deliveries`). Consent authorization, consent revocation, and payment processing enqueue signed delivery records. `WebhookDeliveryJob` performs delivery attempts, records attempts, schedules retries, and moves repeated failures toward a dead-letter state.
+Webhook delivery is modeled as an outbox-style table (`webhook_deliveries`). Consent authorization, consent revocation, and payment processing enqueue signed delivery records. `WebhookDeliveryJob` performs outbound HTTP POST attempts, records response status and errors, schedules retries, and moves repeated failures toward a dead-letter state.
 
 The sandbox intentionally persists delivery history before attempting outbound work so API mutations are durable even when partner webhook endpoints fail.
 
@@ -144,6 +144,7 @@ The API exposes:
 Security coverage is intentionally product-shaped:
 
 - client secrets and bearer tokens are stored as SHA-256 digests
+- webhook signing secrets are returned once and stored encrypted at rest
 - bearer tokens are consent-scoped and short-lived
 - every account/payment lookup is constrained by consent customer and app
 - permissions are enforced per endpoint
@@ -153,7 +154,7 @@ Security coverage is intentionally product-shaped:
 - consent transitions are guarded so duplicate lifecycle calls do not emit duplicate events
 - operator sessions expire server-side after inactivity and are trimmed on a recurring schedule
 - sensitive operator and partner actions are written to `audit_events`
-- webhook payloads are HMAC-SHA256 signed
+- webhook payloads are HMAC-SHA256 signed over `signature_timestamp.canonical_json_body`
 
 The threat model and authorization matrix are documented in `docs/security/`. The simulation boundary is documented in [docs/adr/0006-simulated-openfinance-boundary.md](docs/adr/0006-simulated-openfinance-boundary.md), and deployment readiness in [docs/architecture/deployment-readiness.md](docs/architecture/deployment-readiness.md).
 
@@ -164,7 +165,7 @@ The threat model and authorization matrix are documented in `docs/security/`. Th
 - PostgreSQL is the production target, with SQLite kept only for fast local review and CI portability.
 - Solid Queue, Solid Cache, and Solid Cable are used before Redis because this sandbox benefits more from fewer moving parts than independent scaling tiers.
 - OAuth is simulated rather than fully implementing FAPI/OIDC because the goal is partner workflow validation, not identity-provider certification.
-- Webhook delivery records are persisted and signed, while actual HTTP delivery is simulated to keep tests deterministic.
+- Webhook delivery uses a real HTTP adapter in app environments and an injectable test adapter so automated tests stay deterministic without external services.
 - Scenario behavior is deterministic by app instead of randomized so QA teams can reproduce failures.
 - Production caveats, counterpoints, and escalation paths are documented in `docs/runbooks/production-readiness.md`.
 
@@ -214,7 +215,7 @@ DATABASE_ADAPTER=sqlite3 ruby bin/brakeman --quiet --no-pager
 DATABASE_ADAPTER=sqlite3 ruby bin/bundler-audit
 ```
 
-The CI workflow also runs seed validation, OpenAPI linting, Docker build validation, and coverage artifact upload.
+The CI workflow runs PostgreSQL-backed Rails tests, system tests, seed validation, OpenAPI linting, Docker build validation, and coverage artifact upload.
 
 ## Failure scenarios
 
@@ -239,7 +240,7 @@ Supported scenarios:
 - Add mTLS/JWKS simulation for stronger partner authentication.
 - Add FAPI-style authorization code and PAR/JAR simulation.
 - Add richer Open Finance Brazil payload profiles.
-- Add real outbound webhook HTTP adapter behind a testable interface.
+- Add webhook URL allowlisting/private-network egress controls for shared hosted environments.
 - Add multi-currency account fixtures and scheduled transaction imports.
 - Add Postgres advisory-lock based payment processing benchmarks.
 - Run a real managed PostgreSQL restore drill and attach evidence to `docs/runbooks/postgres-backup-restore.md`.

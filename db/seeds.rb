@@ -96,7 +96,7 @@ if seed_demo_data
     record.external_id = "pay_demo_accepted"
     record.external_reference = "pix-demo-001"
     record.request_fingerprint = DeveloperApp.digest("pix-demo-001:9900:BRL")
-    record.status = "accepted"
+    record.status = "settled"
     record.amount_cents = 9_900
     record.currency = "BRL"
     record.creditor_name = "Paula Santos"
@@ -106,14 +106,15 @@ if seed_demo_data
     record.processed_at = 20.minutes.ago
   end
 
-  WebhookDelivery.find_or_create_by!(event_id: "evt_demo_payment_accepted") do |delivery|
+  WebhookDelivery.find_or_create_by!(event_id: "evt_demo_payment_settled") do |delivery|
     delivery.developer_app = developer_app
-    delivery.event_type = "payment.accepted"
+    delivery.event_type = "payment.settled"
     delivery.aggregate_type = PaymentInitiation.name
     delivery.aggregate_id = payment.id
     delivery.status = "failed"
     delivery.payload = {
-      event_type: "payment.accepted",
+      event_type: "payment.settled",
+      schema_version: 1,
       payment_id: payment.external_id,
       status: payment.status,
       amount_cents: payment.amount_cents

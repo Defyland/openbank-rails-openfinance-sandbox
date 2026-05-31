@@ -12,6 +12,7 @@ module ApiSerializer
       created_at: app.created_at&.iso8601
     }
     payload[:client_secret] = app.plain_client_secret if include_secret
+    payload[:webhook_signing_secret] = app.plain_webhook_signing_secret if include_secret
     payload
   end
 
@@ -102,6 +103,8 @@ module ApiSerializer
       next_attempt_at: delivery.next_attempt_at&.iso8601,
       delivered_at: delivery.delivered_at&.iso8601,
       signature: delivery.signature,
+      signature_timestamp: delivery.signature_timestamp&.iso8601,
+      last_response_status: delivery.last_response_status,
       correlation_id: delivery.correlation_id,
       last_error: delivery.last_error,
       payload: delivery.payload

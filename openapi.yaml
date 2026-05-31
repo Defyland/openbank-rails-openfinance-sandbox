@@ -75,13 +75,17 @@ paths:
             application/json:
               schema:
                 type: object
+                required: [developer_app]
                 properties:
                   developer_app:
                     allOf:
                       - $ref: "#/components/schemas/DeveloperApp"
                       - type: object
+                        required: [client_secret, webhook_signing_secret]
                         properties:
                           client_secret:
+                            type: string
+                          webhook_signing_secret:
                             type: string
         "422":
           $ref: "#/components/responses/ValidationError"
@@ -98,6 +102,7 @@ paths:
             application/json:
               schema:
                 type: object
+                required: [developer_app]
                 properties:
                   developer_app:
                     $ref: "#/components/schemas/DeveloperApp"
@@ -116,6 +121,7 @@ paths:
             application/json:
               schema:
                 type: object
+                required: [consents]
                 properties:
                   consents:
                     type: array
@@ -143,6 +149,7 @@ paths:
             application/json:
               schema:
                 type: object
+                required: [consent]
                 properties:
                   consent:
                     $ref: "#/components/schemas/Consent"
@@ -165,6 +172,7 @@ paths:
             application/json:
               schema:
                 type: object
+                required: [consent]
                 properties:
                   consent:
                     $ref: "#/components/schemas/Consent"
@@ -181,6 +189,14 @@ paths:
       responses:
         "200":
           description: Consent authorized and webhook queued.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [consent]
+                properties:
+                  consent:
+                    $ref: "#/components/schemas/Consent"
   /v1/consents/{consent_id}/revoke:
     patch:
       tags: [Consents]
@@ -192,6 +208,14 @@ paths:
       responses:
         "200":
           description: Consent revoked and webhook queued.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [consent]
+                properties:
+                  consent:
+                    $ref: "#/components/schemas/Consent"
   /v1/oauth/token:
     post:
       tags: [OAuth sandbox]
@@ -222,6 +246,7 @@ paths:
             application/json:
               schema:
                 type: object
+                required: [token]
                 properties:
                   token:
                     $ref: "#/components/schemas/Token"
@@ -240,6 +265,7 @@ paths:
             application/json:
               schema:
                 type: object
+                required: [accounts]
                 properties:
                   accounts:
                     type: array
@@ -271,6 +297,7 @@ paths:
             application/json:
               schema:
                 type: object
+                required: [balance]
                 properties:
                   balance:
                     $ref: "#/components/schemas/Balance"
@@ -322,6 +349,7 @@ paths:
             application/json:
               schema:
                 type: object
+                required: [payment]
                 properties:
                   payment:
                     $ref: "#/components/schemas/Payment"
@@ -351,6 +379,16 @@ paths:
       responses:
         "200":
           description: Delivery history.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [webhook_deliveries]
+                properties:
+                  webhook_deliveries:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/WebhookDelivery"
   /v1/webhook_deliveries/{event_id}:
     get:
       tags: [Webhooks]
@@ -362,6 +400,14 @@ paths:
       responses:
         "200":
           description: Delivery.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [webhook_delivery]
+                properties:
+                  webhook_delivery:
+                    $ref: "#/components/schemas/WebhookDelivery"
   /v1/webhook_deliveries/{event_id}/replay:
     post:
       tags: [Webhooks]
@@ -373,6 +419,14 @@ paths:
       responses:
         "200":
           description: Delivery reset and re-enqueued.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [webhook_delivery]
+                properties:
+                  webhook_delivery:
+                    $ref: "#/components/schemas/WebhookDelivery"
   /v1/scenarios:
     get:
       tags: [Scenarios]
@@ -498,7 +552,7 @@ components:
           minimum: 1
     DeveloperApp:
       type: object
-      required: [id, name, webhook_url, status, active_scenario_code]
+      required: [id, name, webhook_url, status, active_scenario_code, rate_limit_per_minute]
       properties:
         id:
           type: string
@@ -513,6 +567,9 @@ components:
           type: string
         rate_limit_per_minute:
           type: integer
+        created_at:
+          type: string
+          format: date-time
     ConsentCreate:
       type: object
       required: [customer_document_number, permissions]
@@ -528,12 +585,15 @@ components:
           type: string
     Consent:
       type: object
+      required: [id, status, customer_id, permissions, expires_at]
       properties:
         id:
           type: string
         status:
           type: string
           enum: [awaiting_authorization, authorized, revoked, expired, rejected]
+        customer_id:
+          type: string
         permissions:
           type: array
           items:
@@ -541,8 +601,23 @@ components:
         expires_at:
           type: string
           format: date-time
+        authorized_at:
+          type:
+            - string
+            - "null"
+          format: date-time
+        revoked_at:
+          type:
+            - string
+            - "null"
+          format: date-time
+        correlation_id:
+          type:
+            - string
+            - "null"
     Token:
       type: object
+      required: [access_token, token_type, expires_in, expires_at, consent_id, permissions]
       properties:
         access_token:
           type: string
@@ -551,12 +626,18 @@ components:
           const: Bearer
         expires_in:
           type: integer
+        expires_at:
+          type: string
+          format: date-time
+        consent_id:
+          type: string
         permissions:
           type: array
           items:
             type: string
     Account:
       type: object
+      required: [id, type, branch_code, number, check_digit, currency, status]
       properties:
         id:
           type: string
@@ -570,8 +651,11 @@ components:
           type: string
         currency:
           type: string
+        status:
+          type: string
     Balance:
       type: object
+      required: [account_id, currency, available_balance_cents, updated_at]
       properties:
         account_id:
           type: string
@@ -579,6 +663,9 @@ components:
           type: integer
         currency:
           type: string
+        updated_at:
+          type: string
+          format: date-time
     PaymentCreate:
       type: object
       required: [account_id, external_reference, amount_cents, creditor_name, creditor_document, creditor_account]
@@ -601,20 +688,88 @@ components:
           type: string
     Payment:
       type: object
+      required: [id, external_reference, account_id, status, amount_cents, currency, creditor_name, creditor_document, creditor_account]
       properties:
         id:
           type: string
         external_reference:
+          type: string
+        account_id:
           type: string
         status:
           type: string
           enum: [accepted, rejected, settled]
         amount_cents:
           type: integer
+        currency:
+          type: string
+        creditor_name:
+          type: string
+        creditor_document:
+          type: string
+        creditor_account:
+          type: string
         failure_code:
           type:
             - string
             - "null"
+        correlation_id:
+          type:
+            - string
+            - "null"
+        processed_at:
+          type:
+            - string
+            - "null"
+          format: date-time
+    WebhookDelivery:
+      type: object
+      required: [id, event_type, aggregate_type, aggregate_id, status, attempts_count, signature, payload]
+      properties:
+        id:
+          type: string
+        event_type:
+          type: string
+        aggregate_type:
+          type: string
+        aggregate_id:
+          type: integer
+        status:
+          type: string
+          enum: [pending, delivered, failed, dead]
+        attempts_count:
+          type: integer
+        next_attempt_at:
+          type:
+            - string
+            - "null"
+          format: date-time
+        delivered_at:
+          type:
+            - string
+            - "null"
+          format: date-time
+        signature:
+          type: string
+        signature_timestamp:
+          type:
+            - string
+            - "null"
+          format: date-time
+        last_response_status:
+          type:
+            - integer
+            - "null"
+        correlation_id:
+          type:
+            - string
+            - "null"
+        last_error:
+          type:
+            - string
+            - "null"
+        payload:
+          type: object
     ErrorResponse:
       type: object
       required: [error]

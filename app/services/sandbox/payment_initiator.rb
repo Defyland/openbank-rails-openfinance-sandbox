@@ -7,12 +7,8 @@ module Sandbox
       Security::Authorizer.require_consent_customer!(account, access_token.consent)
 
       fingerprint = fingerprint_for(params)
-      existing = PaymentInitiation.find_by(developer_app: developer_app, idempotency_key: idempotency_key)
-      if existing.present? && existing.request_fingerprint == fingerprint
-        existing.created_by_request = false
-        return existing
-      end
-      raise ActiveRecord::RecordNotUnique, "idempotency key reused with a different payload" if existing.present?
+      existing = idempotent_payment_for(developer_app: developer_app, idempotency_key: idempotency_key, fingerprint: fingerprint)
+      return existing if existing.present?
 
       PaymentInitiation.transaction do
         status, failure_code = decision_for(developer_app)
@@ -40,11 +36,26 @@ module Sandbox
         enqueue_webhooks!(developer_app, payment, ledger_transaction, correlation_id)
         payment
       end
+    rescue ActiveRecord::RecordNotUnique
+      existing = idempotent_payment_for(developer_app: developer_app, idempotency_key: idempotency_key, fingerprint: fingerprint)
+      return existing if existing.present?
+
+      raise
     end
 
     def self.fingerprint_for(params)
       canonical = params.deep_stringify_keys.sort.to_h
       OpenSSL::Digest::SHA256.hexdigest(JSON.generate(canonical))
+    end
+
+    def self.idempotent_payment_for(developer_app:, idempotency_key:, fingerprint:)
+      existing = PaymentInitiation.find_by(developer_app: developer_app, idempotency_key: idempotency_key)
+      return if existing.blank?
+
+      raise ActiveRecord::RecordNotUnique, "idempotency key reused with a different payload" unless existing.request_fingerprint == fingerprint
+
+      existing.created_by_request = false
+      existing
     end
 
     def self.decision_for(developer_app)

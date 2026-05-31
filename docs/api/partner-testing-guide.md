@@ -19,7 +19,7 @@ It is not a certified Open Finance authorization server or production bank parti
 
 ## Happy Path
 
-1. Register a developer app and persist the returned `client_id`, one-time `client_secret`, and webhook signing secret.
+1. Register a developer app and persist the returned `client_id`, one-time `client_secret`, and one-time `webhook_signing_secret`.
 2. Create a consent with the smallest permission set needed for the test.
 3. Authorize the consent.
 4. Issue a consent-scoped bearer token through `/v1/oauth/token`.
@@ -62,10 +62,13 @@ Partners should build receivers against the v1 contracts in `docs/events/`:
 - `payment.settled`
 - `payment.rejected`
 
+The receiver should verify `X-OpenBank-Signature` by computing HMAC-SHA256 with the `webhook_signing_secret` over `X-OpenBank-Signature-Timestamp + "." + canonical_json_body`.
+
 The receiver should persist:
 
 - raw request body
 - computed signature and received signature
+- signature timestamp
 - `event_id`
 - `event_type`
 - `schema_version`

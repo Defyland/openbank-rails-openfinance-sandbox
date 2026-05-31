@@ -1,5 +1,4 @@
 ENV["RAILS_ENV"] ||= "test"
-ENV["DATABASE_ADAPTER"] ||= "sqlite3"
 
 require "simplecov"
 SimpleCov.start "rails" do
@@ -10,6 +9,14 @@ require_relative "../config/environment"
 require "rails/test_help"
 require "active_job/test_helper"
 Dir[Rails.root.join("test/support/**/*.rb")].sort.each { |file| require file }
+
+class TestWebhookHttpClient
+  def self.deliver!(_delivery)
+    Sandbox::WebhookHttpClient::Response.new(202, "accepted")
+  end
+end
+
+Rails.application.config.x.webhook_http_client = TestWebhookHttpClient
 
 module ActiveSupport
   class TestCase
@@ -24,5 +31,6 @@ module ActiveSupport
 
     include ActiveJob::TestHelper
     include ApiTestHelper
+    include OpenapiContractAssertions
   end
 end

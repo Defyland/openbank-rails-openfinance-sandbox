@@ -23,6 +23,10 @@
           Copy
         </button>
       </dd>
+      <dt>Signature timestamp</dt>
+      <dd><%= @webhook_delivery.signature_timestamp&.iso8601 || "-" %></dd>
+      <dt>Last HTTP status</dt>
+      <dd><%= @webhook_delivery.last_response_status || "-" %></dd>
       <dt>Last error</dt>
       <dd><%= @webhook_delivery.last_error || "-" %></dd>
     </dl>

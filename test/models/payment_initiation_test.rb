@@ -52,6 +52,63 @@ class PaymentInitiationTest < ActiveSupport::TestCase
     assert_equal 1, PaymentInitiation.where(idempotency_key: "same").count
   end
 
+  test "idempotency recovers when a concurrent insert wins the race" do
+    customer, account = create_customer_with_account
+    app, = create_developer_app
+    consent = create_authorized_consent(app: app, customer: customer)
+    token = issue_token(app: app, consent: consent)
+    params = {
+      account_id: account.external_id,
+      external_reference: "pix-race",
+      amount_cents: 2_000,
+      currency: "BRL",
+      creditor_name: "Ana Lima",
+      creditor_document: "99988877766",
+      creditor_account: "0001/43210-1"
+    }
+
+    existing = Sandbox::PaymentInitiator.call!(
+      developer_app: app,
+      access_token: token,
+      params: params,
+      idempotency_key: "race",
+      correlation_id: "corr"
+    )
+    first_lookup = true
+    find_by_stub = lambda do |*args, **kwargs|
+      if args.empty? && kwargs[:idempotency_key] == "race" && first_lookup
+        first_lookup = false
+        nil
+      else
+        scope = args.empty? ? PaymentInitiation.all : PaymentInitiation.where(*args)
+        scope.find_by(**kwargs)
+      end
+    end
+    create_stub = ->(**) { raise ActiveRecord::RecordNotUnique, "duplicate idempotency key" }
+
+    original_find_by = PaymentInitiation.method(:find_by)
+    original_create = PaymentInitiation.method(:create!)
+    begin
+      PaymentInitiation.define_singleton_method(:find_by, find_by_stub)
+      PaymentInitiation.define_singleton_method(:create!, create_stub)
+
+      duplicate = Sandbox::PaymentInitiator.call!(
+        developer_app: app,
+        access_token: token,
+        params: params,
+        idempotency_key: "race",
+        correlation_id: "corr"
+      )
+    ensure
+      PaymentInitiation.define_singleton_method(:find_by) { |*args, **kwargs| original_find_by.call(*args, **kwargs) }
+      PaymentInitiation.define_singleton_method(:create!) { |*args, **kwargs| original_create.call(*args, **kwargs) }
+    end
+
+    assert_equal existing.id, duplicate.id
+    refute duplicate.created_by_request?
+    assert_equal 1, PaymentInitiation.where(idempotency_key: "race").count
+  end
+
   test "payment rejection scenario does not debit account" do
     customer, account = create_customer_with_account(balance_cents: 50_000)
     app, = create_developer_app

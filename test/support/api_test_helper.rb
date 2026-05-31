@@ -37,7 +37,7 @@ module ApiTestHelper
       webhook_url: webhook_url,
       rate_limit_per_minute: rate_limit_per_minute
     )
-    [ app, app.plain_client_secret ]
+    [ app, app.plain_client_secret, app.plain_webhook_signing_secret || app.webhook_signing_secret ]
   end
 
   def client_headers(app, secret)
