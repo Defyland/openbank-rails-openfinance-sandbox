@@ -108,6 +108,56 @@ paths:
                     $ref: "#/components/schemas/DeveloperApp"
         "401":
           $ref: "#/components/responses/Unauthorized"
+  /v1/developer_app/client_secret/rotate:
+    post:
+      tags: [Developer apps]
+      summary: Rotate the authenticated developer app client secret
+      security:
+        - ClientCredentials: []
+      responses:
+        "200":
+          description: Client secret rotated. The replacement secret is returned once.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [developer_app]
+                properties:
+                  developer_app:
+                    allOf:
+                      - $ref: "#/components/schemas/DeveloperApp"
+                      - type: object
+                        required: [client_secret]
+                        properties:
+                          client_secret:
+                            type: string
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /v1/developer_app/webhook_signing_secret/rotate:
+    post:
+      tags: [Developer apps]
+      summary: Rotate the authenticated developer app webhook signing secret
+      security:
+        - ClientCredentials: []
+      responses:
+        "200":
+          description: Webhook signing secret rotated. The replacement secret is returned once.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [developer_app]
+                properties:
+                  developer_app:
+                    allOf:
+                      - $ref: "#/components/schemas/DeveloperApp"
+                      - type: object
+                        required: [webhook_signing_secret]
+                        properties:
+                          webhook_signing_secret:
+                            type: string
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /v1/consents:
     get:
       tags: [Consents]

@@ -13,6 +13,7 @@ This repository now implements the functional Rails API slice required by the in
 - PostgreSQL primary configuration with SQLite fallback for deterministic local review
 - Minitest model, request, failure, authorization, system, and repository compliance coverage
 - OpenAPI response contract checks backed by JSON Schema validation
+- versioned webhook event contract checks backed by the published JSON schemas
 - GitHub Actions for lint, tests, seed validation, security checks, OpenAPI linting, Docker build, and coverage upload
 - structured request/correlation IDs, JSON logs, persisted audit events, opt-in OpenTelemetry instrumentation, readiness, liveness, Prometheus metrics, and Grafana dashboard definition
 - k6 smoke, load, stress, and spike scripts
@@ -24,7 +25,8 @@ This repository now implements the functional Rails API slice required by the in
 - consent as the central authorization aggregate
 - permission checks across every simulated Open Finance resource endpoint
 - app-scoped sandbox scenarios for deterministic partner QA
-- signed outbound webhook delivery with retry, replay, response status, and delivery history
+- signed outbound webhook delivery with retry, replay attempt reset, response status, immutable delivery signatures, and delivery history
+- authenticated one-time rotation endpoints for client and webhook signing secrets
 - idempotent payment initiation with payload fingerprinting and concurrent insert recovery
 - cross-app and cross-customer isolation tests
 

@@ -26,12 +26,15 @@ It is not a certified Open Finance authorization server or production bank parti
 5. Call account, balance, transaction, and payment APIs with the bearer token.
 6. Receive signed webhook deliveries and deduplicate by `event_id`.
 7. Revoke the consent and verify old tokens stop working.
+8. Rotate client and webhook signing secrets and verify old client credentials stop authenticating.
 
 ## Simulated OAuth/FAPI Contract
 
 | Production concept | Sandbox representation | Partner behavior being tested |
 | --- | --- | --- |
 | OAuth client authentication | `X-Client-Id` and `X-Client-Secret` headers | Store and rotate client credentials safely. |
+| Client secret rotation | `POST /v1/developer_app/client_secret/rotate` | Persist the one-time replacement and stop using the old secret immediately. |
+| Webhook signing secret rotation | `POST /v1/developer_app/webhook_signing_secret/rotate` | Use the replacement secret for newly created deliveries; deduplicate old deliveries by `event_id`. |
 | Authorization grant | Consent-bound `/v1/oauth/token` call | Request tokens only for active consent. |
 | Access token | Short-lived bearer token stored as digest | Send token only in `Authorization` header. |
 | Resource server scope check | Endpoint-level permission enforcement | Handle HTTP 403 and request correct consent permissions. |

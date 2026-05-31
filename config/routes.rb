@@ -27,6 +27,8 @@ Rails.application.routes.draw do
   namespace :v1 do
     resources :developer_apps, only: :create
     get "/developer_app", to: "developer_apps#show"
+    post "/developer_app/client_secret/rotate", to: "developer_apps#rotate_client_secret"
+    post "/developer_app/webhook_signing_secret/rotate", to: "developer_apps#rotate_webhook_signing_secret"
 
     resources :consents, only: %i[index create show] do
       patch :authorize, on: :member

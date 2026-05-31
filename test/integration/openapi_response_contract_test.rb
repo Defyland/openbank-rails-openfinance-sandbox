@@ -10,6 +10,8 @@ class OpenapiResponseContractTest < ActionDispatch::IntegrationTest
     assert_includes document.fetch("paths").keys, "/v1/consents"
     assert_includes document.fetch("paths").keys, "/v1/oauth/token"
     assert_includes document.fetch("paths").keys, "/v1/payments"
+    assert_includes document.fetch("paths").keys, "/v1/developer_app/client_secret/rotate"
+    assert_includes document.fetch("paths").keys, "/v1/developer_app/webhook_signing_secret/rotate"
     assert document.dig("components", "securitySchemes", "ClientCredentials")
     assert document.dig("components", "securitySchemes", "BearerAuth")
   end

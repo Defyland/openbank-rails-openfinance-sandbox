@@ -106,6 +106,7 @@ The test suite covers:
 - idempotency conflict behavior
 - rate limiting and standardized error payloads
 - OpenAPI document validity and real response payload conformance through JSON Schema
+- published webhook event schemas against the actual event builders
 - `/ops` authentication, scenario activation, consent revocation, and webhook replay through Capybara system tests
 
 Run the complete suite with:
@@ -145,6 +146,7 @@ Security coverage is intentionally product-shaped:
 
 - client secrets and bearer tokens are stored as SHA-256 digests
 - webhook signing secrets are returned once and stored encrypted at rest
+- client and webhook signing secrets can be rotated through authenticated one-time replacement endpoints
 - bearer tokens are consent-scoped and short-lived
 - every account/payment lookup is constrained by consent customer and app
 - permissions are enforced per endpoint
@@ -156,6 +158,7 @@ Security coverage is intentionally product-shaped:
 - operator sessions expire server-side after inactivity and are trimmed on a recurring schedule
 - sensitive operator and partner actions are written to `audit_events`
 - webhook payloads are HMAC-SHA256 signed over `signature_timestamp.canonical_json_body`
+- existing webhook deliveries keep their original signature; webhook signing secret rotation applies to newly created deliveries
 
 The threat model and authorization matrix are documented in `docs/security/`. The simulation boundary is documented in [docs/adr/0006-simulated-openfinance-boundary.md](docs/adr/0006-simulated-openfinance-boundary.md), and deployment readiness in [docs/architecture/deployment-readiness.md](docs/architecture/deployment-readiness.md).
 

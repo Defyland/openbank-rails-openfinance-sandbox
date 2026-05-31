@@ -1,6 +1,6 @@
 module V1
   class DeveloperAppsController < ApiController
-    before_action :authenticate_client!, only: :show
+    before_action :authenticate_client!, only: %i[show rotate_client_secret rotate_webhook_signing_secret]
 
     def create
       app = DeveloperApp.create!(developer_app_params)
@@ -17,6 +17,26 @@ module V1
 
     def show
       render json: { developer_app: ApiSerializer.developer_app(current_developer_app) }
+    end
+
+    def rotate_client_secret
+      current_developer_app.rotate_client_secret!
+      AuditTrail.record!(
+        action: "v1.developer_app.client_secret_rotated",
+        actor: current_developer_app,
+        target: current_developer_app
+      )
+      render json: { developer_app: ApiSerializer.developer_app(current_developer_app, include_secret: true) }
+    end
+
+    def rotate_webhook_signing_secret
+      current_developer_app.rotate_webhook_signing_secret!
+      AuditTrail.record!(
+        action: "v1.developer_app.webhook_signing_secret_rotated",
+        actor: current_developer_app,
+        target: current_developer_app
+      )
+      render json: { developer_app: ApiSerializer.developer_app(current_developer_app, include_secret: true) }
     end
 
     private

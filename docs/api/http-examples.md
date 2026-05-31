@@ -15,6 +15,20 @@ curl -s http://localhost:3000/v1/developer_apps \
 
 The create response returns one-time `client_secret` and `webhook_signing_secret` values. Persist both before discarding the response body.
 
+## Rotate Developer App Secrets
+
+```bash
+curl -X POST http://localhost:3000/v1/developer_app/client_secret/rotate \
+  -H "X-Client-Id: app_xxx" \
+  -H "X-Client-Secret: sk_sandbox_current"
+
+curl -X POST http://localhost:3000/v1/developer_app/webhook_signing_secret/rotate \
+  -H "X-Client-Id: app_xxx" \
+  -H "X-Client-Secret: sk_sandbox_current"
+```
+
+Each rotation response returns the replacement secret once. Existing webhook delivery records keep their original signature; deliveries created after webhook signing secret rotation use the replacement secret.
+
 ## Create and Authorize Consent
 
 ```bash

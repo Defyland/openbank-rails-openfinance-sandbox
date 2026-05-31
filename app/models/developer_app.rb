@@ -34,6 +34,26 @@ class DeveloperApp < ApplicationRecord
     ActiveSupport::SecurityUtils.secure_compare(self.class.digest(secret), client_secret_digest)
   end
 
+  def rotate_client_secret!
+    @plain_webhook_signing_secret = nil
+    @plain_client_secret = self.class.generate_client_secret
+    update!(client_secret_digest: self.class.digest(@plain_client_secret))
+    @plain_client_secret
+  end
+
+  def rotate_webhook_signing_secret!
+    @plain_client_secret = nil
+    @plain_webhook_signing_secret = self.class.generate_webhook_signing_secret
+    update!(webhook_signing_secret_ciphertext: self.class.encrypt_secret(@plain_webhook_signing_secret))
+    @plain_webhook_signing_secret
+  end
+
+  def reload(...)
+    @plain_client_secret = nil
+    @plain_webhook_signing_secret = nil
+    super
+  end
+
   def webhook_signing_secret
     return plain_webhook_signing_secret if plain_webhook_signing_secret.present?
     return legacy_webhook_signing_secret if webhook_signing_secret_ciphertext.blank?
@@ -43,6 +63,14 @@ class DeveloperApp < ApplicationRecord
 
   def self.digest(value)
     OpenSSL::Digest::SHA256.hexdigest(value.to_s)
+  end
+
+  def self.generate_client_secret
+    "sk_sandbox_#{SecureRandom.hex(24)}"
+  end
+
+  def self.generate_webhook_signing_secret
+    "whsec_sandbox_#{SecureRandom.hex(32)}"
   end
 
   def self.encrypt_secret(value)
@@ -64,14 +92,14 @@ class DeveloperApp < ApplicationRecord
     self.client_id ||= "app_#{SecureRandom.hex(10)}"
     return if client_secret_digest.present?
 
-    @plain_client_secret ||= "sk_sandbox_#{SecureRandom.hex(24)}"
+    @plain_client_secret ||= self.class.generate_client_secret
     self.client_secret_digest = self.class.digest(@plain_client_secret)
   end
 
   def assign_webhook_signing_secret
     return if webhook_signing_secret_ciphertext.present?
 
-    @plain_webhook_signing_secret ||= "whsec_sandbox_#{SecureRandom.hex(32)}"
+    @plain_webhook_signing_secret ||= self.class.generate_webhook_signing_secret
     self.webhook_signing_secret_ciphertext = self.class.encrypt_secret(@plain_webhook_signing_secret)
   end
 
