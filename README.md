@@ -209,6 +209,17 @@ Run with Docker Compose and PostgreSQL:
 docker compose up --build
 ```
 
+## Railway deployment
+
+OpenBank Sandbox includes `railway.json` for a Dockerfile-based Railway deploy.
+
+- build uses the existing `Dockerfile`
+- `/up` is the activation health check
+- `bin/docker-entrypoint` runs `bin/prepare-runtime-databases` before the Rails server boots
+- `SOLID_QUEUE_IN_PUMA=true` keeps the demo topology single-service so the sandbox can run without a dedicated worker service
+
+Deployment guide: [RAILWAY_DEPLOY.md](RAILWAY_DEPLOY.md)
+
 ## How to run tests
 
 ```bash
