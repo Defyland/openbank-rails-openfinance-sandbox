@@ -259,3 +259,11 @@ Supported scenarios:
 - Add multi-currency account fixtures and scheduled transaction imports.
 - Add Postgres advisory-lock based payment processing benchmarks.
 - Run a real managed PostgreSQL restore drill and attach evidence to `docs/runbooks/postgres-backup-restore.md`.
+
+## License
+
+This repository is published under the MIT License. See
+[LICENSE.txt](LICENSE.txt).
+
+That keeps the sandbox flows, scenario contract, and operational guidance
+reusable for study and internal experimentation.
